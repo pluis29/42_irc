@@ -3,9 +3,12 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 namespace Utils {
-void errorMessage(std::string function, std::string error);
-}
+void error_message(std::string function, std::string error);
+std::vector<std::string> split(std::string str, char c);
+std::string toUpperCase(std::string str);
+}  // namespace Utils
 
 #endif

@@ -2,7 +2,7 @@ P_SRC = src/
 P_INCLUDE = include/
 P_OBJ = ./obj/
 
-F_SRC = main.cpp server.cpp utils.cpp
+F_SRC = main.cpp server.cpp utils.cpp user.cpp command.cpp
 
 OBJ = $(addprefix $(P_OBJ), $(F_SRC:%.cpp=$(OBJDIR)%.o))
 
@@ -25,10 +25,10 @@ $(P_OBJ)%.o: $(P_SRC)%.cpp
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 run: all
-	./$(NAME) .default.conf
+	./$(NAME) 6667 123
 
 val: all
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --undef-value-errors=yes --errors-for-leak-kinds=all --show-reachable=yes ./$(NAME) .default.conf
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --undef-value-errors=yes --errors-for-leak-kinds=all --show-reachable=yes ./$(NAME) 6667 123
 
 clean:
 	$(RM) $(P_OBJ)
