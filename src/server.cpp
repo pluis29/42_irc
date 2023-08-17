@@ -8,6 +8,22 @@ Server::Server(std::string host, std::string port, std::string password)
     return;
 }
 
+Server::~Server(void) {
+    std::vector<User *>::iterator userIt = this->_users_vector.begin();
+    std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
+
+    for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
+        close((*pollIt).fd);
+    }
+
+    for (; userIt != this->_users_vector.end(); userIt++) {
+        delete *userIt;
+    }
+    this->_users_vector.clear();
+
+    return;
+}
+
 void Server::set_socket_fd(void) {
     struct addrinfo *result;
     struct addrinfo *rp;
@@ -101,28 +117,19 @@ void Server::_create_user(void) {
     return;
 }
 
-// otimizar
 void Server::_message_recived(int fd) {
-    char buff;
+    char buffer[BUFFER_SIZE];
+    ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
     std::string str;
-    int a = 0;
 
-    while (str.find("\n")) {
-        if (recv(fd, &buff, 1, 0) < 0) {
-            continue;
-        } else {
-            str += buff;
-            if (a > 500) str = "/Quit not today!\r\n";
-
-            if (str.find("\n") != std::string::npos) {
-                if (str.size() == 1) str = "/Quit not today!\r\n";
-                std::cout << "fd: " << fd << "input >> " << str << std::endl;
-                Command command(str, fd, *this);
-                break;
-            }
-        }
-        a++;
+    if (bytesRead <= 0) {
+        std::cout << "Client disconnected" << std::endl;
+        Command command("/Quit", fd, *this);
+        return;
     }
+    buffer[bytesRead] = '\0';
+    str = buffer;
+    if (str.find("\n") != std::string::npos) Command command(str, fd, *this);
     str.clear();
 }
 
@@ -135,3 +142,47 @@ User *Server::get_user_fd(int user_fd) {
 }
 
 std::string Server::get_password(void) { return this->_password; }
+
+void Server::delete_user(int fd) {
+    std::vector<User *>::iterator userIt = this->_users_vector.begin();
+    std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
+
+    for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
+        if ((*pollIt).fd == fd) {
+            this->_pollfd_vector.erase(pollIt);
+            close(fd);
+            break;
+        }
+    }
+
+    for (; userIt != this->_users_vector.end(); userIt++) {
+        if ((*userIt)->get_fd() == fd) {
+            delete *userIt;
+            this->_users_vector.erase(userIt);
+            break;
+        }
+    }
+}
+
+std::vector<User *> Server::get_users(void) { return (this->_users_vector); }
+
+void Server::message_all_users(std::string msg, int user_fd) {
+    std::vector<User *>::iterator it = this->_users_vector.begin();
+
+    if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
+
+    for (; it != this->_users_vector.end(); it++)
+        if ((*it)->get_fd() != user_fd)
+            if (send((*it)->get_fd(), msg.c_str(), strlen(msg.c_str()), 0) < 0)
+                Utils::error_message("messageToServer: send:", strerror(errno));
+
+    return;
+}
+
+bool Server::check_operators(void) {
+    std::vector<User *>::iterator it = this->_users_vector.begin();
+    for(; it != this->_users_vector.end(); it++)
+        if ((*it)->is_oper()) return true;
+
+    return false;
+}

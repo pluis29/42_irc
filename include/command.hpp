@@ -9,6 +9,8 @@
 #include "utils.hpp"
 // devo incluir as libs necessarias ou usar as que ja estao nos headers?
 //
+#define COMMAND_USER 1
+#define ANY_COMMAND 0
 class Server;
 
 class Command {
@@ -20,11 +22,14 @@ class Command {
 
     void _parse_buffer(std::string buffer);
     void _handle_command(void);
-    int _check_user_registration(void);
+    bool _check_user_registration(int flag);
     void _invalid_command(void);
 
     typedef void (Command::*command_handler)(void);
     void _command_pass(void);
+    void _command_quit(void);
+    void _command_nick(void);
+    void _command_user(void);
 
    public:
     void message_to_user(std::string msg, std::string code, int fd = 0,
