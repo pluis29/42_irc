@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -27,12 +28,13 @@ class Server {
     ~Server(void);
     void set_socket_fd(void);
     void init_pool(void);
-    User* get_user_fd(int user_fd);
+    User *get_user_fd(int user_fd);
     std::string get_password(void);
     void delete_user(int fd);
-    std::vector<User*> get_users(void);
+    std::vector<User *> get_users(void);
     void message_all_users(std::string msg, int user_fd);
     bool check_operators(void);
+    User *find_next_oper(int user_fd);
 
    private:
     std::string _host;
@@ -40,7 +42,7 @@ class Server {
     std::string _password;
     int _socket_fd;
     std::vector<pollfd> _pollfd_vector;
-    std::vector<User*> _users_vector;
+    std::vector<User *> _users_vector;
 
     void _handle_polling(void);
     void _create_user(void);

@@ -1,7 +1,5 @@
 #include "utils.hpp"
 
-#include <algorithm>
-
 void Utils::error_message(std::string function, std::string error) {
     throw std::runtime_error("ERROR " + function + ": " + error);
 }

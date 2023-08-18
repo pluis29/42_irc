@@ -32,8 +32,7 @@ class Command {
     void _command_user(void);
 
    public:
-    void message_to_user(std::string msg, std::string code, int fd = 0,
-            std::string opt = "");
+    void message_to_user(std::string msg, std::string code, int fd = 0, std::string opt = "");
     Command(std::string buffer, int user_fd, Server &server);
     ~Command(void);
 };

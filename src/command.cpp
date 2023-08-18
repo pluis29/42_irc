@@ -4,7 +4,7 @@
 
 #include "utils.hpp"
 
-Command::Command(std::string buffer, int user_fd, Server &server)
+Command::Command(std::string buffer, int user_fd, Server& server)
     : _user(*server.get_user_fd(user_fd)), _server(server) {
     _parse_buffer(buffer);
     _handle_command();
@@ -21,7 +21,7 @@ void Command::_parse_buffer(std::string buffer) {
     if (this->_args.size() == 0) return;
 
     this->_command = Utils::toUpperCase(*this->_args.begin());
-    std::cout << this->_command << std::endl;
+    /* std::cout << this->_command << std::endl; */
     this->_args.erase(this->_args.begin());
     if (this->_args[0][0] == ':') this->_args[0].erase(0, 1);
     return;
@@ -36,10 +36,8 @@ void Command::_handle_command(void) {
     auth_command_map["NICK"] = &Command::_command_nick;
     auth_command_map["USER"] = &Command::_command_user;
 
-    std::map<std::string, command_handler>::iterator it =
-        command_map.find(this->_command);
-    std::map<std::string, command_handler>::iterator it2 =
-        auth_command_map.find(this->_command);
+    std::map<std::string, command_handler>::iterator it = command_map.find(this->_command);
+    std::map<std::string, command_handler>::iterator it2 = auth_command_map.find(this->_command);
 
     if (it != command_map.end()) {
         (this->*(it->second))();
@@ -55,50 +53,41 @@ void Command::_invalid_command(void) {
     std::string response;
 
     if (!this->_user.check_auth()) {
-        message_to_user("Authenticate is required: usage: /PASS <password>",
-                        "464");
+        message_to_user("Authenticate is required: usage: /PASS <password>", "464");
         return;
     } else if (this->_user.get_nick().empty()) {
         message_to_user("A nick must be provide: usage: /NICK <nick>", "431");
         return;
     } else if (this->_user.get_username().empty()) {
-        message_to_user(
-            "A user must be provide: usage: /USER <username> <hostname> "
-            "<servername> <realname>",
-            "431");
+        message_to_user("A user must be provide: usage: /USER <username> <hostname> "
+                        "<servername> <realname>",
+                        "431");
         return;
     }
-    response = ":127.0.0.1 421 " + this->_user.get_nick() + " " +
-               this->_command + " :Unknown command\r\n";
-    if (send(this->_user.get_fd(), response.c_str(), strlen(response.c_str()),
-             0) < 0)
+    response = ":127.0.0.1 421 " + this->_user.get_nick() + " " + this->_command + " :Unknown command\r\n";
+    if (send(this->_user.get_fd(), response.c_str(), strlen(response.c_str()), 0) < 0)
         Utils::error_message("send:", strerror(errno));
 }
 
 void Command::_command_nick(void) {
-    std::vector<User *> users;
-    std::vector<User *>::iterator it;
+    std::vector<User*> users;
+    std::vector<User*>::iterator it;
 
-    if (this->_args.size() != 1)
-        return (message_to_user(":No nickname given", "431"));
+    if (this->_args.size() != 1) return (message_to_user(":No nickname given", "431"));
     if (this->_args[0].empty() || Utils::check_invalid_char(this->_args[0]))
         return (message_to_user(":Erroneous nickname", "432"));
     users = this->_server.get_users();
     it = users.begin();
     for (; it != users.end(); it++) {
-        if (this->_args[0] == (*it)->get_nick())
-            return (message_to_user(":Nickname is already in use", "433"));
+        if (this->_args[0] == (*it)->get_nick()) return (message_to_user(":Nickname is already in use", "433"));
     }
     this->_user.set_nick(this->_args[0]);
     message_to_user("change nick to " + this->_user.get_nick(), "001");
 }
 
 void Command::_command_pass(void) {
-    if (this->_user.check_auth())
-        return (message_to_user(":Unauthorized command (already registered)",
-                                "462"));
-    if (this->_args.empty() || this->_args.size() != 1)
-        return (message_to_user(":Not enough parameters", "461"));
+    if (this->_user.check_auth()) return (message_to_user(":Unauthorized command (already registered)", "462"));
+    if (this->_args.empty() || this->_args.size() != 1) return (message_to_user(":Not enough parameters", "461"));
     if (this->_args[0] == this->_server.get_password()) {
         this->_user.set_auth();
         return (message_to_user(":Password Correct", "001"));
@@ -108,24 +97,20 @@ void Command::_command_pass(void) {
 
 void Command::_command_user(void) {
     if (!this->_check_user_registration(COMMAND_USER)) return;
-    if (this->_args.size() != 4)
-        return (message_to_user(":Not enough parameters", "461"));
+    if (this->_args.size() != 4) return (message_to_user(":Not enough parameters", "461"));
     if (this->_user.get_username().empty() == false)
-        return (message_to_user(":Unauthorized command (already registered)",
-                                "462"));
+        return (message_to_user(":Unauthorized command (already registered)", "462"));
     this->_user.set_username(this->_args[0]);
     this->_user.set_hostname(this->_args[1]);
     this->_user.set_servername(this->_args[2]);
     this->_user.set_realname(this->_args[3]);
-    message_to_user("Welcome to the ft_irc " + this->_user.get_nick() + "!" +
-                        this->_user.get_username() + "@" +
+    message_to_user("Welcome to the ft_irc " + this->_user.get_nick() + "!" + this->_user.get_username() + "@" +
                         this->_user.get_hostname(),
                     "001");
 
     if (!this->_server.check_operators()) {
         this->_user.set_operator();
         message_to_user(":You are now an IRC operator", "381");
-        this->_server.message_all_users( ":ft_irc 001 all :" + this->_user.get_nick() + " :is now an operator.", this->_user.get_fd());
     }
     return;
 }
@@ -144,18 +129,16 @@ bool Command::_check_user_registration(int flag) {
     if (flag == COMMAND_USER)  // caso username function
         return true;
     if (this->_user.get_username().empty()) {
-        message_to_user(
-            "A user must be provide: usage: /USER <username> <hostname> "
-            "<servername> <realname>",
-            "431");
+        message_to_user("A user must be provide: usage: /USER <username> <hostname> "
+                        "<servername> <realname>",
+                        "431");
         return false;
     }
     return true;
 }
 
 /* // otimizar isso */
-void Command::message_to_user(std::string msg, std::string code, int fd,
-                              std::string opt) {
+void Command::message_to_user(std::string msg, std::string code, int fd, std::string opt) {
     std::string response;
     std::string nick = this->_user.get_nick();
 
@@ -164,21 +147,29 @@ void Command::message_to_user(std::string msg, std::string code, int fd,
     if (opt != "") response += opt + " ";
     response += msg + "\r\n";
     if (fd == 0) fd = this->_user.get_fd();
-    if (send(fd, response.c_str(), strlen(response.c_str()), 0) < 0)
-        Utils::error_message("send:", strerror(errno));
+    if (send(fd, response.c_str(), strlen(response.c_str()), 0) < 0) Utils::error_message("send:", strerror(errno));
 
     return;
 }
 
 void Command::_command_quit(void) {
-    User *user;
+    User* user;
     std::string response;
 
     /* response = ":" + this->_user.get_nick() + " QUIT :" + */
     /*            Utils::join_split(this->_args.begin() + 1, this->_args.end());
      */
 
-    /* this->_ircServer.messageAllUsers(response); */
-    std::cout << "User left: " << this->_user.get_fd() << std::endl;
+    /* this->_server.message_all_users(response); */
+    if (this->_user.is_oper()) this->_user.set_operator();
+
+    if (this->_server.get_users().size() != 1 && this->_server.check_operators() == false) {
+        user = this->_server.find_next_oper(this->_user.get_fd());
+        if (user != NULL) {
+            user->is_oper();
+            message_to_user(":You are now an IRC operator", "381", user->get_fd());
+        }
+    }
+    std::cout << "User left. FD: " << this->_user.get_fd() << std::endl;
     this->_server.delete_user(this->_user.get_fd());
 }

@@ -1,6 +1,7 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <vector>

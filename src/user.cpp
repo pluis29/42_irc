@@ -1,9 +1,6 @@
 #include "user.hpp"
 
-User::User(int user_fd)
-    : _user_fd(user_fd), _nick(""), _username(""), _auth(false), _oper(false) {
-    return;
-}
+User::User(int user_fd) : _user_fd(user_fd), _nick(""), _username(""), _auth(false), _oper(false) { return; }
 
 User::~User(void) { close(this->_user_fd); }
 
@@ -25,9 +22,7 @@ void User::set_hostname(std::string hostname) { this->_hostname = hostname; }
 
 void User::set_realname(std::string realname) { this->_realname = realname; }
 
-void User::set_servername(std::string servername) {
-    this->_servername = servername;
-}
+void User::set_servername(std::string servername) { this->_servername = servername; }
 
 std::string User::get_hostname(void) { return this->_hostname; }
 

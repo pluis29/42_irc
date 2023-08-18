@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+#include <ostream>
+
 #include "utils.hpp"
 
 Server::Server(std::string host, std::string port, std::string password)
@@ -37,16 +39,13 @@ void Server::set_socket_fd(void) {
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = 0;
-    exit_code =
-        getaddrinfo(this->_host.c_str(), this->_port.c_str(), &hints, &result);
-    if (exit_code != 0)
-        Utils::error_message("getaddrinfo", gai_strerror(exit_code));
+    exit_code = getaddrinfo(this->_host.c_str(), this->_port.c_str(), &hints, &result);
+    if (exit_code != 0) Utils::error_message("getaddrinfo", gai_strerror(exit_code));
     rp = result;
     while (rp) {
         server_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (server_fd == -1) continue;
-        exit_code = setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &value,
-                               sizeof(value));
+        exit_code = setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value));
         if (exit_code != 0) {
             close(server_fd);
             freeaddrinfo(result);
@@ -60,8 +59,7 @@ void Server::set_socket_fd(void) {
     freeaddrinfo(result);
     if (rp == NULL) Utils::error_message("bind", gai_strerror(exit_code));
     exit_code = listen(server_fd, 50);  // use define
-    if (exit_code == -1)
-        Utils::error_message("listen", gai_strerror(exit_code));
+    if (exit_code == -1) Utils::error_message("listen", gai_strerror(exit_code));
     this->_socket_fd = server_fd;
     return;
 }
@@ -70,14 +68,12 @@ void Server::init_pool(void) {
     struct pollfd pfds = {this->_socket_fd, POLLIN, 0};
     std::vector<pollfd>::iterator it;
 
-    if (fcntl(this->_socket_fd, F_SETFL, O_NONBLOCK) == -1)
-        Utils::error_message("fcntl", strerror(errno));
+    if (fcntl(this->_socket_fd, F_SETFL, O_NONBLOCK) == -1) Utils::error_message("fcntl", strerror(errno));
     this->_pollfd_vector.push_back(pfds);
 
     while (true) {  // fix
         it = this->_pollfd_vector.begin();
-        if (poll(&(*it), this->_pollfd_vector.size(), 5000) == -1)
-            Utils::error_message("poll", strerror(errno));
+        if (poll(&(*it), this->_pollfd_vector.size(), 5000) == -1) Utils::error_message("poll", strerror(errno));
         this->_handle_polling();
     }
 }
@@ -85,8 +81,7 @@ void Server::init_pool(void) {
 void Server::_handle_polling(void) {
     std::vector<pollfd>::iterator it;
 
-    for (it = this->_pollfd_vector.begin(); it != this->_pollfd_vector.end();
-         it++) {
+    for (it = this->_pollfd_vector.begin(); it != this->_pollfd_vector.end(); it++) {
         if (it->revents && POLLIN) {
             if (it->fd == this->_socket_fd)
                 this->_create_user();
@@ -107,8 +102,7 @@ void Server::_create_user(void) {
     user_fd = accept(this->_socket_fd, (struct sockaddr *)&cli_addr, &len);
     if (user_fd < 0) Utils::error_message("accept", strerror(errno));
     pollfd user_pfds = {user_fd, POLLIN, 0};
-    if (fcntl(user_fd, F_SETFL, O_NONBLOCK) == -1)
-        Utils::error_message("fcntl", strerror(errno));
+    if (fcntl(user_fd, F_SETFL, O_NONBLOCK) == -1) Utils::error_message("fcntl", strerror(errno));
 
     new_user = new User(user_fd);
     this->_users_vector.push_back(new_user);
@@ -181,8 +175,16 @@ void Server::message_all_users(std::string msg, int user_fd) {
 
 bool Server::check_operators(void) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
-    for(; it != this->_users_vector.end(); it++)
+    for (; it != this->_users_vector.end(); it++)
         if ((*it)->is_oper()) return true;
 
     return false;
+}
+
+User *Server::find_next_oper(int user_fd) {
+    std::vector<User *>::iterator userIt = this->_users_vector.begin();
+    for (; userIt != this->_users_vector.end(); userIt++) {
+        if (!((*userIt)->get_username().empty()) && (*userIt)->get_fd() != user_fd) return *userIt;
+    }
+    return NULL;
 }
