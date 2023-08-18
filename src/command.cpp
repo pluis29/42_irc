@@ -1,5 +1,6 @@
 #include "command.hpp"
 
+#include <cstddef>
 #include <ostream>
 
 #include "utils.hpp"
@@ -35,6 +36,7 @@ void Command::_handle_command(void) {
     command_map["QUIT"] = &Command::_command_quit;
     auth_command_map["NICK"] = &Command::_command_nick;
     auth_command_map["USER"] = &Command::_command_user;
+    auth_command_map["OPER"] = &Command::_command_oper;
 
     std::map<std::string, command_handler>::iterator it = command_map.find(this->_command);
     std::map<std::string, command_handler>::iterator it2 = auth_command_map.find(this->_command);
@@ -93,6 +95,22 @@ void Command::_command_pass(void) {
         return (message_to_user(":Password Correct", "001"));
     } else
         return (message_to_user(":Password incorrect", "339"));
+}
+
+void Command::_command_oper(void) {
+    User* user;
+
+    if (!this->_check_user_registration(0)) return;
+    if (this->_args.size() != 2) return (message_to_user(":Not enough parameters", "461"));
+    user = this->_server.get_user_byNick(this->_args[0]);
+    if (user == NULL ) return (message_to_user(":No such nick", "401"));
+    if (user->is_oper()) return (message_to_user(":You are already an operator.", "690"));
+    if (this->_args[1] == OPERATOR_PASS)
+        user->set_operator();
+    else
+        return (message_to_user(":Password incorrect", "464"));
+    message_to_user(":You are now an IRC operator", "381", user->get_fd());
+    return;
 }
 
 void Command::_command_user(void) {

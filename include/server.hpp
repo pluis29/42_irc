@@ -35,6 +35,7 @@ class Server {
     void message_all_users(std::string msg, int user_fd);
     bool check_operators(void);
     User *find_next_oper(int user_fd);
+User* get_user_byNick(std::string nick);
 
    private:
     std::string _host;

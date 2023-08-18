@@ -188,3 +188,11 @@ User *Server::find_next_oper(int user_fd) {
     }
     return NULL;
 }
+
+User *Server::get_user_byNick(std::string nick) {
+    std::vector<User *>::iterator it = this->_users_vector.begin();
+
+    for (; it != this->_users_vector.end(); it++)
+        if ((*it)->get_nick() == nick) return *it;
+    return NULL;
+}
