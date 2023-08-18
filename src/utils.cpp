@@ -30,3 +30,10 @@ bool Utils::check_invalid_char(std::string str) {
         if (!isalnum(str[i]) && !isalpha(str[i])) return true;
     return false;
 }
+
+std::string Utils::joinToString(std::vector<std::string>::iterator first, std::vector<std::string>::iterator last) {
+    std::string message;
+
+    for (; first != last; first++) message += *first + " ";
+    return (message);
+}

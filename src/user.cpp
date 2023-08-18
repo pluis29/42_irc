@@ -1,5 +1,7 @@
 #include "user.hpp"
 
+#include "utils.hpp"
+
 User::User(int user_fd) : _user_fd(user_fd), _nick(""), _username(""), _auth(false), _oper(false) { return; }
 
 User::~User(void) { close(this->_user_fd); }
@@ -29,3 +31,10 @@ std::string User::get_hostname(void) { return this->_hostname; }
 void User::set_operator(void) { this->_oper = !this->_oper; }
 
 bool User::is_oper(void) { return (this->_oper); }
+
+void User::send_message_to_user(std::string message) {
+    if (message.find("\r\n") == std::string::npos) message += "\r\n";
+    if (send(get_fd(), message.c_str(), strlen(message.c_str()), 0) < 0)
+        Utils::error_message("receiveMessage: send:", strerror(errno));
+    return;
+}

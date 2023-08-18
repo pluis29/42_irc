@@ -1,9 +1,14 @@
 #ifndef USER_HPP_
 #define USER_HPP_
 
+#include <sys/socket.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstring>
 #include <iostream>
+
+#include "utils.hpp"
 
 class User {
    public:
@@ -22,6 +27,7 @@ class User {
     std::string get_hostname(void);
     void set_operator(void);
     bool is_oper(void);
+    void send_message_to_user(std::string message);
 
    private:
     int _user_fd;

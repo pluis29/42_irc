@@ -1,8 +1,7 @@
 #include "command.hpp"
 
-#include <cstddef>
-#include <ostream>
-
+#include "server.hpp"
+#include "user.hpp"
 #include "utils.hpp"
 
 Command::Command(std::string buffer, int user_fd, Server& server)
@@ -37,6 +36,7 @@ void Command::_handle_command(void) {
     auth_command_map["NICK"] = &Command::_command_nick;
     auth_command_map["USER"] = &Command::_command_user;
     auth_command_map["OPER"] = &Command::_command_oper;
+    auth_command_map["KILL"] = &Command::_command_kill;
 
     std::map<std::string, command_handler>::iterator it = command_map.find(this->_command);
     std::map<std::string, command_handler>::iterator it2 = auth_command_map.find(this->_command);
@@ -97,13 +97,32 @@ void Command::_command_pass(void) {
         return (message_to_user(":Password incorrect", "339"));
 }
 
+void Command::_command_kill(void) {
+    User* user;
+    std::string message;
+    std::string response;
+
+    if (!this->_check_user_registration(0)) return;
+    if (this->_args.size() < 2) return (message_to_user(":Not enough parameters", "461"));
+    if (!this->_user.is_oper()) return (message_to_user(":Permission Denied- You're not an IRC operator", "481"));
+    user = this->_server.get_user_byNick(this->_args[0]);
+    if (user == NULL) return (message_to_user(":No such nick", "401"));
+
+    message = Utils::joinToString(this->_args.begin() + 1, this->_args.end());
+    if (message[0] == ':') message.erase(0, 1);
+    response = ":" + this->_user.get_nick() + " KILL " + user->get_nick() + " . " + message;
+    user->send_message_to_user(response);
+    std::cout << "User left. FD: " << this->_user.get_fd() << std::endl;
+    this->_server.delete_user(user->get_fd());
+}
+
 void Command::_command_oper(void) {
     User* user;
 
     if (!this->_check_user_registration(0)) return;
     if (this->_args.size() != 2) return (message_to_user(":Not enough parameters", "461"));
     user = this->_server.get_user_byNick(this->_args[0]);
-    if (user == NULL ) return (message_to_user(":No such nick", "401"));
+    if (user == NULL) return (message_to_user(":No such nick", "401"));
     if (user->is_oper()) return (message_to_user(":You are already an operator.", "690"));
     if (this->_args[1] == OPERATOR_PASS)
         user->set_operator();

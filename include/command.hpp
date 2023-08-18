@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <map>
+#include <cstddef>
+#include <ostream>
 
 #include "server.hpp"
 #include "user.hpp"
@@ -12,7 +14,6 @@
 #define COMMAND_USER 1
 #define ANY_COMMAND 0
 #define OPERATOR_PASS "aprovado"
-class Server;
 
 class Command {
    private:
@@ -32,6 +33,7 @@ class Command {
     void _command_nick(void);
     void _command_user(void);
     void _command_oper(void);
+    void _command_kill(void);
 
    public:
     void message_to_user(std::string msg, std::string code, int fd = 0, std::string opt = "");

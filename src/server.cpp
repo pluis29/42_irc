@@ -1,7 +1,6 @@
 #include "server.hpp"
 
-#include <ostream>
-
+#include "command.hpp"
 #include "utils.hpp"
 
 Server::Server(std::string host, std::string port, std::string password)
@@ -160,6 +159,7 @@ void Server::delete_user(int fd) {
 
 std::vector<User *> Server::get_users(void) { return (this->_users_vector); }
 
+// inutil
 void Server::message_all_users(std::string msg, int user_fd) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
 
