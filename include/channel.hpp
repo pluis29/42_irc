@@ -14,6 +14,7 @@ class Channel {
     std::string get_password(void);
     void add_user(User* user);
     void message_to_channel(std::string msg);
+    void message_to_channel(std::string msg, int exclude_fd);
     std::vector<User*> get_users(void);
     void remove_user(User* user);
 

@@ -28,13 +28,35 @@ void Channel::add_user(User* user) {
     return;
 }
 
+/**
+ * @brief message to all user in the channel excluding the sender
+ *
+ * @param msg
+ * @param exclude_fd user to not recive
+ */
+void Channel::message_to_channel(std::string msg, int exclude_fd) {
+    std::vector<User*>::iterator it = this->_users.begin();
+
+    if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
+    for (; it != this->_users.end(); it++)
+        if ((*it)->get_fd() != exclude_fd)
+            if (send((*it)->get_fd(), msg.c_str(), strlen(msg.c_str()), 0) < 0)
+                Utils::error_message("message_to_channel: send:", strerror(errno));
+    return;
+}
+
+/**
+ * @brief message to all users in the channel
+ *
+ * @param msg
+ */
 void Channel::message_to_channel(std::string msg) {
     std::vector<User*>::iterator it = this->_users.begin();
 
     if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
     for (; it != this->_users.end(); it++)
         if (send((*it)->get_fd(), msg.c_str(), strlen(msg.c_str()), 0) < 0)
-            Utils::error_message("messageFromChannel: send:", strerror(errno));
+            Utils::error_message("message_to_channel: send:", strerror(errno));
     return;
 }
 

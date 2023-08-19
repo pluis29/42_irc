@@ -40,6 +40,7 @@ void Command::_handle_command(void) {
     auth_command_map["KILL"] = &Command::_command_kill;
     auth_command_map["JOIN"] = &Command::_command_join;
     auth_command_map["WHO"] = &Command::_command_who;
+    auth_command_map["PRIVMSG"] = &Command::_command_privmsg;
 
     std::map<std::string, command_handler>::iterator it = command_map.find(this->_command);
     std::map<std::string, command_handler>::iterator it2 = auth_command_map.find(this->_command);
@@ -258,7 +259,7 @@ void Command::_command_who(void) {
         for (; it != users.end(); it++) {
             message_to_user((*it)->get_realname(), "352", 0, (*it)->get_username() + " 0 * " + (*it)->get_nick());
         }
-    } else {//channel
+    } else {  // channel
         std::string target = this->_args[0];
 
         if (target[0] == '#') {
@@ -282,4 +283,30 @@ void Command::_command_who(void) {
         }
     }
     message_to_user("END of /WHO list", "315");
+}
+
+void Command::_command_privmsg(void) {
+    if (!this->_check_user_registration(0)) return;
+    if (this->_args.size() == 0) return message_to_user(":No recipient given", "411");
+    if (this->_args.size() == 1) return message_to_user(":No text to send", "412");
+
+    std::string target = this->_args[0];
+    std::string message = Utils::joinToString(this->_args.begin() + 1, this->_args.end());
+    std::string response;
+
+    if (target[0] != '#') {
+        User* receive = this->_server.get_user_byNick(target);
+        if (receive == NULL) return message_to_user("No such nick/channel", "401");
+        if (message[0] == ':') message.erase(0, 1);
+        response = ":" + this->_user.get_nick() + " PRIVMSG " + receive->get_nick() + " :" + message;
+        receive->send_message_to_user(response);
+    } else {
+        Channel* channel = this->_server.get_channel(target);
+        if (channel == NULL) return message_to_user(":No such channel", "403");
+        if (channel->get_user_in_channel(this->_user.get_nick()) == NULL)
+            return message_to_user(":You're not on that channel", "442");
+        if (message[0] == ':') message.erase(0, 1);
+        response = ":" + this->_user.get_nick() + " PRIVMSG " + channel->get_name() + " :" + message;
+        channel->message_to_channel(response, this->_user.get_fd());
+    }
 }

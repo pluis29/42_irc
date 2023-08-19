@@ -1,19 +1,20 @@
 P_SRC = src/
 P_INCLUDE = include/
-P_OBJ = ./obj/
+P_OBJ = obj/
 
 F_SRC = main.cpp server.cpp utils.cpp user.cpp command.cpp channel.cpp
 
-OBJ = $(addprefix $(P_OBJ), $(F_SRC:%.cpp=$(OBJDIR)%.o))
+OBJ = $(addprefix $(P_OBJ), $(F_SRC:%.cpp=%.o))
 
 NAME = ircserv
 
 INC = -I $(P_INCLUDE)
 CFLAGS =  -std=c++98 -g
 # CFLAGS = -Wall -Wextra -Werror -std=c++98 -g
-P_GUARD = mkdir -p $(@D)
 RM = rm -rf
 CC = c++
+
+.PHONY: all clean fclean  re run
 
 all: $(NAME)
 
@@ -21,7 +22,7 @@ $(NAME): $(OBJ)
 	$(CC) $(CFLAGS) $(INC) $(OBJ) -o $(NAME)
 
 $(P_OBJ)%.o: $(P_SRC)%.cpp
-	$(P_GUARD)
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 run: all
@@ -37,5 +38,3 @@ fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
-
-.PHONY: all clean fclean  re run
