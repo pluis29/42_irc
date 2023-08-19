@@ -1,5 +1,6 @@
 #include "command.hpp"
 
+#include "channel.hpp"
 #include "server.hpp"
 #include "user.hpp"
 #include "utils.hpp"
@@ -37,6 +38,8 @@ void Command::_handle_command(void) {
     auth_command_map["USER"] = &Command::_command_user;
     auth_command_map["OPER"] = &Command::_command_oper;
     auth_command_map["KILL"] = &Command::_command_kill;
+    auth_command_map["JOIN"] = &Command::_command_join;
+    auth_command_map["WHO"] = &Command::_command_who;
 
     std::map<std::string, command_handler>::iterator it = command_map.find(this->_command);
     std::map<std::string, command_handler>::iterator it2 = auth_command_map.find(this->_command);
@@ -209,4 +212,74 @@ void Command::_command_quit(void) {
     }
     std::cout << "User left. FD: " << this->_user.get_fd() << std::endl;
     this->_server.delete_user(this->_user.get_fd());
+}
+
+void Command::_command_join(void) {
+    Channel* channel;
+    std::string users;
+    /* std::string channel_name; */
+    std::string password;
+
+    if (!this->_check_user_registration(0)) return;
+
+    if (this->_args[0][0] != '#') this->_args[0] = "#" + this->_args[0];
+    if (this->_args.size() < 1 || this->_args.size() > 2) return (message_to_user(":Not enough parameters", "461"));
+    if (Utils::check_invalid_char(this->_args[0].c_str() + 1)) return (message_to_user(":No such channel", "403"));
+
+    password = this->_args.size() == 1 ? "" : this->_args[1];
+    channel = this->_server.get_channel(this->_args[0]);
+    if (channel == NULL) {
+        channel = new Channel(this->_args[0], password);
+        this->_server.add_channel(channel);
+    }
+
+    if (channel->get_user_in_channel(this->_user.get_nick()) != NULL)
+        return (message_to_user(":is already on channel", "443"));
+    if (password == channel->get_password())
+        this->_user.add_channel(channel);
+    else
+        return message_to_user(":Password incorrect", "464");
+    channel->message_to_channel(":" + this->_user.get_nick() + " JOIN " + channel->get_name());
+    /* users = Utils::joinToString(channel->get_users()); */
+    /* channel_name = channel->get_name(); */
+    /* if (channel_name[0] == '#') channel_name.erase(0, 1); */
+    /* message_to_user(users, "353", 0, "= " + channel_name); */
+    /* message_to_user("End of /NAMES list", "366", 0, channel_name); */
+}
+
+void Command::_command_who(void) {
+    if (!this->_check_user_registration(0)) return;
+    std::vector<User*> users = this->_server.get_users();
+    std::vector<User*>::iterator it = users.begin();
+
+    if (this->_args.size() > 2) return message_to_user(":Not enough parameters", "461");
+    // who
+    if (this->_args.size() == 0) {
+        for (; it != users.end(); it++) {
+            message_to_user((*it)->get_realname(), "352", 0, (*it)->get_username() + " 0 * " + (*it)->get_nick());
+        }
+    } else {//channel
+        std::string target = this->_args[0];
+
+        if (target[0] == '#') {
+            Channel* channel = this->_server.get_channel(target);
+            if (channel == NULL) return message_to_user(":No such channel", "403");
+            std::string userList = Utils::joinToString(channel->get_users());
+            std::string channelName = channel->get_name();
+            if (channelName[0] == '#') channelName.erase(0, 1);
+            message_to_user(userList, "352", 0, "Users on " + channelName + ": ");
+        } else {
+            for (; it != users.end(); it++) {
+                std::string response = (*it)->get_username() + " 0 * " + (*it)->get_nick();
+                if ((*it)->get_realname().find(target) != std::string::npos ||
+                    (*it)->get_username().find(target) != std::string::npos) {
+                    if (this->_args.size() == 1 ||
+                        (this->_args.size() == 2 && this->_args[1] == "o" && (*it)->is_oper())) {
+                        message_to_user((*it)->get_realname(), "352", 0, response);
+                    }
+                }
+            }
+        }
+    }
+    message_to_user("END of /WHO list", "315");
 }

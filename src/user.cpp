@@ -1,5 +1,6 @@
 #include "user.hpp"
 
+#include "channel.hpp"
 #include "utils.hpp"
 
 User::User(int user_fd) : _user_fd(user_fd), _nick(""), _username(""), _auth(false), _oper(false) { return; }
@@ -9,6 +10,8 @@ User::~User(void) { close(this->_user_fd); }
 int User::get_fd(void) { return this->_user_fd; }
 
 std::string User::get_username(void) { return this->_username; }
+
+std::string User::get_realname(void) { return this->_realname; }
 
 std::string User::get_nick(void) { return this->_nick; }
 
@@ -36,5 +39,16 @@ void User::send_message_to_user(std::string message) {
     if (message.find("\r\n") == std::string::npos) message += "\r\n";
     if (send(get_fd(), message.c_str(), strlen(message.c_str()), 0) < 0)
         Utils::error_message("receiveMessage: send:", strerror(errno));
+    return;
+}
+
+void User::add_channel(Channel* channel) {
+    std::vector<Channel*>::iterator it = this->_channel_vector.begin();
+
+    for (; it != this->_channel_vector.end(); it++)
+        if ((*it)->get_name() == channel->get_name()) return;
+    this->_channel_vector.push_back(channel);
+    channel->add_user(this);
+
     return;
 }

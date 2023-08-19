@@ -8,7 +8,10 @@
 #include <cstring>
 #include <iostream>
 
+#include "command.hpp"
 #include "utils.hpp"
+
+class Channel;
 
 class User {
    public:
@@ -28,6 +31,8 @@ class User {
     void set_operator(void);
     bool is_oper(void);
     void send_message_to_user(std::string message);
+    void add_channel(Channel* channel);
+    std::string get_realname(void);
 
    private:
     int _user_fd;
@@ -38,6 +43,7 @@ class User {
     std::string _hostname;
     bool _auth;
     bool _oper;
+    std::vector<Channel*> _channel_vector;
 };
 
 #endif

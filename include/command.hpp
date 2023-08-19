@@ -2,12 +2,10 @@
 #define COMMAND_HPP_
 
 #include <algorithm>
-#include <map>
 #include <cstddef>
+#include <map>
 #include <ostream>
 
-#include "server.hpp"
-#include "user.hpp"
 #include "utils.hpp"
 // devo incluir as libs necessarias ou usar as que ja estao nos headers?
 
@@ -15,7 +13,16 @@
 #define ANY_COMMAND 0
 #define OPERATOR_PASS "aprovado"
 
+class Server;
+class Channel;
+class User;
+
 class Command {
+   public:
+    void message_to_user(std::string msg, std::string code, int fd = 0, std::string opt = "");
+    Command(std::string buffer, int user_fd, Server &server);
+    ~Command(void);
+
    private:
     User &_user;
     Server &_server;
@@ -34,11 +41,8 @@ class Command {
     void _command_user(void);
     void _command_oper(void);
     void _command_kill(void);
-
-   public:
-    void message_to_user(std::string msg, std::string code, int fd = 0, std::string opt = "");
-    Command(std::string buffer, int user_fd, Server &server);
-    ~Command(void);
+    void _command_join(void);
+    void _command_who(void);
 };
 
 #endif

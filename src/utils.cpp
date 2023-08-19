@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "user.hpp"
 
 void Utils::error_message(std::string function, std::string error) {
     throw std::runtime_error("ERROR " + function + ": " + error);
@@ -35,5 +36,13 @@ std::string Utils::joinToString(std::vector<std::string>::iterator first, std::v
     std::string message;
 
     for (; first != last; first++) message += *first + " ";
+    return (message);
+}
+
+std::string Utils::joinToString(std::vector<User *> users) {
+    std::string message;
+    std::vector<User *>::iterator it = users.begin();
+
+    for (; it != users.end(); it++) message += (*it)->get_nick() + " ";
     return (message);
 }

@@ -1,5 +1,6 @@
 #include "server.hpp"
 
+#include "channel.hpp"
 #include "command.hpp"
 #include "utils.hpp"
 
@@ -12,6 +13,12 @@ Server::Server(std::string host, std::string port, std::string password)
 Server::~Server(void) {
     std::vector<User *>::iterator userIt = this->_users_vector.begin();
     std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
+    std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin();
+
+    for (; channelIt != this->_channel_vector.end(); channelIt++) {
+        delete *channelIt;
+    }
+    this->_channel_vector.clear();
 
     for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
         close((*pollIt).fd);
@@ -122,6 +129,7 @@ void Server::_message_recived(int fd) {
     }
     buffer[bytesRead] = '\0';
     str = buffer;
+    std::cout << str << std::endl;
     if (str.find("\n") != std::string::npos) Command command(str, fd, *this);
     str.clear();
 }
@@ -139,6 +147,9 @@ std::string Server::get_password(void) { return this->_password; }
 void Server::delete_user(int fd) {
     std::vector<User *>::iterator userIt = this->_users_vector.begin();
     std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
+    std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin();
+
+    for (; channelIt != this->_channel_vector.end(); channelIt++) (*channelIt)->remove_user(get_user_fd(fd));
 
     for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
         if ((*pollIt).fd == fd) {
@@ -196,3 +207,16 @@ User *Server::get_user_byNick(std::string nick) {
         if ((*it)->get_nick() == nick) return *it;
     return NULL;
 }
+
+Channel *Server::get_channel(std::string name) {
+    std::vector<Channel *>::iterator it = this->_channel_vector.begin();
+
+    if (name[0] != '#') name = '#' + name;
+
+    for (; it != this->_channel_vector.end(); it++) {
+        if ((*it)->get_name() == name) return (*it);
+    }
+    return NULL;
+}
+
+void Server::add_channel(Channel *channel) { this->_channel_vector.push_back(channel); }

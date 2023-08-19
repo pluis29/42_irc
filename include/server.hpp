@@ -15,12 +15,15 @@
 #include <iostream>
 #include <vector>
 
+#include "channel.hpp"
 #include "command.hpp"
 #include "user.hpp"
 
 #define HOST "127.0.0.1"
 #define SERVER ":ft_irc "
 #define BUFFER_SIZE 1024
+
+class Channel;
 
 class Server {
    public:
@@ -36,6 +39,8 @@ class Server {
     bool check_operators(void);
     User *find_next_oper(int user_fd);
     User *get_user_byNick(std::string nick);
+    Channel *get_channel(std::string name);
+    void add_channel(Channel *channel);
 
    private:
     std::string _host;
@@ -44,6 +49,7 @@ class Server {
     int _socket_fd;
     std::vector<pollfd> _pollfd_vector;
     std::vector<User *> _users_vector;
+    std::vector<Channel *> _channel_vector;
 
     void _handle_polling(void);
     void _create_user(void);
