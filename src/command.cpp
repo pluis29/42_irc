@@ -98,7 +98,7 @@ void Command::_command_pass(void) {
         this->_user.set_auth();
         return (message_to_user(":Password Correct", "001"));
     } else
-        return (message_to_user(":Password incorrect", "339"));
+        return (message_to_user(":Password incorrect", "464"));
 }
 
 void Command::_command_kill(void) {
@@ -128,10 +128,9 @@ void Command::_command_oper(void) {
     user = this->_server.get_user_byNick(this->_args[0]);
     if (user == NULL) return (message_to_user(":No such nick", "401"));
     if (user->is_oper()) return (message_to_user(":You are already an operator.", "690"));
-    if (this->_args[1] == OPERATOR_PASS)
-        user->set_operator();
-    else
+    if (this->_args[1] != OPERATOR_PASS)
         return (message_to_user(":Password incorrect", "464"));
+    user->set_operator();
     message_to_user(":You are now an IRC operator", "381", user->get_fd());
     return;
 }
