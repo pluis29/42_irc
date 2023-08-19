@@ -1,20 +1,14 @@
 #ifndef COMMAND_HPP_
 #define COMMAND_HPP_
 
-#include <algorithm>
-#include <cstddef>
-#include <map>
-#include <ostream>
-
-#include "utils.hpp"
-// devo incluir as libs necessarias ou usar as que ja estao nos headers?
+#include "common.hpp"
 
 #define COMMAND_USER 1
 #define ANY_COMMAND 0
 #define OPERATOR_PASS "aprovado"
 
+
 class Server;
-class Channel;
 class User;
 
 class Command {

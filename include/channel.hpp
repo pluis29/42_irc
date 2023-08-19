@@ -1,10 +1,9 @@
 #ifndef CHANNEL_HPP_
 #define CHANNEL_HPP_
 
-#include <cwchar>
+#include "common.hpp"
 
-#include "user.hpp"
-/* #include <vector> */
+class User;
 
 class Channel {
    public:

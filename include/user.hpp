@@ -1,15 +1,8 @@
 #ifndef USER_HPP_
 #define USER_HPP_
 
-#include <sys/socket.h>
-#include <unistd.h>
 
-#include <cerrno>
-#include <cstring>
-#include <iostream>
-
-#include "command.hpp"
-#include "utils.hpp"
+#include "common.hpp"
 
 class Channel;
 

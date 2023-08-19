@@ -1,6 +1,7 @@
 #include "server.hpp"
 
 #include "channel.hpp"
+#include "user.hpp"
 #include "command.hpp"
 #include "utils.hpp"
 

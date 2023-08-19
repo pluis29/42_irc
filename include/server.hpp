@@ -1,29 +1,14 @@
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
 
-#include <fcntl.h>
-#include <netdb.h>
-#include <poll.h>
-#include <sys/socket.h>
-#include <unistd.h>
-
-#include <cerrno>
-#include <csignal>
-#include <cstdlib>
-#include <cstring>
-#include <exception>
-#include <iostream>
-#include <vector>
-
-#include "channel.hpp"
-#include "command.hpp"
-#include "user.hpp"
+#include "common.hpp"
 
 #define HOST "127.0.0.1"
 #define SERVER ":ft_irc "
 #define BUFFER_SIZE 1024
 
 class Channel;
+class User;
 
 class Server {
    public:
