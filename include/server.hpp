@@ -3,9 +3,10 @@
 
 #include "common.hpp"
 
-#define HOST "127.0.0.1"
-#define SERVER ":ft_irc "
 #define BUFFER_SIZE 1024
+#define SERVERNAME "ft_irc"
+#define SERVER ":ft_irc "
+#define HOST "127.0.0.1"
 
 class Channel;
 class User;

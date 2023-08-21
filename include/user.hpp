@@ -27,6 +27,11 @@ class User {
     void add_channel(Channel* channel);
     std::string get_realname(void);
 
+
+
+
+    std::string get_servername(void);
+
    private:
     int _user_fd;
     std::string _nick;

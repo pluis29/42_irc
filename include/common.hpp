@@ -1,8 +1,10 @@
 #ifndef COMMON_HPP_
 #define COMMON_HPP_
 
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>

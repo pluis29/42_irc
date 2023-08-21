@@ -49,6 +49,8 @@ void User::add_channel(Channel* channel) {
         if ((*it)->get_name() == channel->get_name()) return;
     this->_channel_vector.push_back(channel);
     channel->add_user(this);
-
     return;
 }
+
+
+std::string User::get_servername(void) { return this->_servername; }

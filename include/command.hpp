@@ -27,6 +27,9 @@ class Command {
     bool _check_user_registration(int flag);
     void _invalid_command(void);
 
+    void _flush_hex(std::string channel_name);
+    void _give_oper_to_creator(std::string channel_name);
+
     typedef void (Command::*command_handler)(void);
     void _command_pass(void);
     void _command_quit(void);
