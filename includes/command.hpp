@@ -26,9 +26,10 @@ class Command {
     std::vector<std::string> _args;
     std::string _command;
 
-
-
     void _flush_hex(std::string channel_target);
+    std::vector<std::string> set_next_channel_oper(bool use_loop, std::string channel_name = "");
+    void _list_server_oper(void);
+    void _list_channel_oper(std::string channel_name);
 
     typedef void (Command::*command_handler)(void);
     void _command_pass(void);
@@ -38,6 +39,8 @@ class Command {
     void _command_oper(void);
     void _command_join(void);
     void _command_who(void);
+    void _command_privmsg(void);
+    void _command_part(void);
 };
 
 #endif

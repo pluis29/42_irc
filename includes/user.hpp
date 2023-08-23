@@ -30,7 +30,9 @@ class User {
     bool is_server_oper(void) const;
     void set_server_oper(void);
 
+    void send_message_to_user(std::string message);
     void add_channel(Channel* channel);
+    void    remove_channel(std::string channel_name);
 
     std::map<std::string, bool> user_channel_info;
 

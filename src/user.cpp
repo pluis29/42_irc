@@ -63,3 +63,17 @@ void User::set_username(std::string username) { this->_username = username; }
 void User::set_realname(std::string realname) { this->_realname = realname; }
 
 void User::set_servername(std::string servername) { this->_servername = servername; }
+
+void User::send_message_to_user(std::string message) {
+    if (message.find("\r\n") == std::string::npos) message += "\r\n";
+    if (send(get_user_fd(), message.c_str(), strlen(message.c_str()), 0) < 0)
+        Utils::error_message("receiveMessage: send:", strerror(errno));
+    return;
+}
+
+void User::remove_channel(std::string channel_name) {
+    std::map<std::string, bool>::iterator it = user_channel_info.find(channel_name);
+    if (it != user_channel_info.end()) {
+        user_channel_info.erase(it);
+    }
+}
