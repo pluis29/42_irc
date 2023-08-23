@@ -1,9 +1,9 @@
 #include "server.hpp"
 
+#include "channel.hpp"
 #include "command.hpp"
 #include "user.hpp"
 #include "utils.hpp"
-#include "channel.hpp"
 
 Server::Server(const int port, const std::string password) : _host_ip(HOST_IP), _port(port), _password(password) {
     _set_server_socket();
@@ -13,6 +13,12 @@ Server::Server(const int port, const std::string password) : _host_ip(HOST_IP), 
 Server::~Server(void) {
     std::vector<User *>::iterator userIt = this->_users_vector.begin();
     std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
+    std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin();
+
+    for (; channelIt != this->_channel_vector.end(); channelIt++) {
+        delete *channelIt;
+    }
+    this->_channel_vector.clear();
 
     for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
         close((*pollIt).fd);
@@ -165,9 +171,9 @@ User *Server::find_next_server_oper(int user_fd) {
 void Server::delete_user(int fd) {
     std::vector<User *>::iterator userIt = this->_users_vector.begin();
     std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
-    /* std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin(); */
+    std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin();
 
-    /* for (; channelIt != this->_channel_vector.end(); channelIt++) (*channelIt)->remove_user(get_user_fd(fd)); */
+    for (; channelIt != this->_channel_vector.end(); channelIt++) (*channelIt)->remove_user(get_user_by_fd(fd));
 
     for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
         if ((*pollIt).fd == fd) {

@@ -26,6 +26,10 @@ class Command {
     std::vector<std::string> _args;
     std::string _command;
 
+
+
+    void _flush_hex(std::string channel_target);
+
     typedef void (Command::*command_handler)(void);
     void _command_pass(void);
     void _command_nick(void);
@@ -33,6 +37,7 @@ class Command {
     void _command_quit(void);
     void _command_oper(void);
     void _command_join(void);
+    void _command_who(void);
 };
 
 #endif
