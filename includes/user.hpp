@@ -27,6 +27,13 @@ class User {
     std::string get_username(void) const;
     std::string get_servername(void) const;
 
+    bool is_server_oper(void) const;
+    void set_server_oper(void);
+
+    void add_channel(Channel* channel);
+
+    std::map<std::string, bool> user_channels;
+
    private:
     int _user_fd;
     std::string _nick;
@@ -34,7 +41,7 @@ class User {
 
     bool _general_auth;
     bool _password_auth;
-    bool _oper;
+    bool _server_oper;
 
     std::string _realname;
     std::string _servername;

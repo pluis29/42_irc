@@ -10,6 +10,7 @@
 #define MAX_CONNECTION 50
 
 class User;
+class Channel;
 
 class Server {
    public:
@@ -21,6 +22,14 @@ class Server {
     User *get_user_by_fd(int user_fd);
     std::string get_password(void) const;
     std::vector<User *> get_users_in_server(void) const;
+    User *get_user_byNick(std::string nick);
+    Channel *get_channel_by_name(std::string name);
+    void add_channel(Channel *channel);
+
+    bool find_server_oper(void);
+    User *find_next_server_oper(int user_fd);
+
+    void delete_user(int fd);
 
    private:
     const int _port;
@@ -29,6 +38,7 @@ class Server {
 
     std::vector<pollfd> _pollfd_vector;
     std::vector<User *> _users_vector;
+    std::vector<Channel *> _channel_vector;
 
     int _server_socket;
 

@@ -1,11 +1,12 @@
 #include "user.hpp"
 
-#include <string>
+#include <map>
 
+#include "channel.hpp"
 #include "utils.hpp"
 
 User::User(int user_fd)
-    : _user_fd(user_fd), _nick(""), _username(""), _general_auth(false), _password_auth(false), _oper(false) {
+    : _user_fd(user_fd), _nick(""), _username(""), _general_auth(false), _password_auth(false), _server_oper(false) {
     return;
 }
 
@@ -15,8 +16,7 @@ bool User::is_general_auth(void) const { return _general_auth; }
 
 bool User::is_password_auth(void) const { return _password_auth; }
 
-
-
+bool User::is_server_oper(void) const { return _server_oper; }
 
 std::string User::get_hostname(void) const { return _hostname; }
 
@@ -28,9 +28,27 @@ std::string User::get_username(void) const { return _username; }
 
 int User::get_user_fd(void) const { return _user_fd; }
 
+void User::add_channel(Channel* channel) {
+    std::map<std::string, bool>::iterator it = user_channels.find(channel->get_channel_name());
+    // Verifica se o canal já existe nos canais do usuário
+    if (it != user_channels.end()) {
+        return; // Canal já existe, não faz nada
+    }
 
+    user_channels.insert(std::make_pair(channel->get_channel_name(), false));
+    if (!channel->find_channel_oper()) {
+        user_channels[channel->get_channel_name()] = true;
+        std::string response = ":" + _nick + "!" + _username + "@" + _hostname +
+                               " MODE :" + channel->get_channel_name() + " +o " + _nick + "\r\n";
+        if (send(_user_fd, response.c_str(), strlen(response.c_str()), 0) < 0)
+            Utils::error_message("send:", strerror(errno));
+    }
 
+    channel->add_user(this);
+    return;
+}
 
+void User::set_server_oper(void) { _server_oper = !_server_oper; }
 
 void User::set_password_auth(void) { _password_auth = true; }
 
