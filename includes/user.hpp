@@ -32,7 +32,7 @@ class User {
 
     void add_channel(Channel* channel);
 
-    std::map<std::string, bool> user_channels;
+    std::map<std::string, bool> user_channel_info;
 
    private:
     int _user_fd;

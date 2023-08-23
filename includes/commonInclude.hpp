@@ -20,6 +20,7 @@
 #include <iostream>
 #include <map>
 #include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 

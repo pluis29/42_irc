@@ -35,7 +35,7 @@ void Command::_handle_command(void) {
     if (_user.is_general_auth()) {
         command_map["OPER"] = &Command::_command_oper;  //--
         command_map["JOIN"] = &Command::_command_join;
-        // command_map["WHO"] = &Command::_command_who;  //--
+        command_map["WHO"] = &Command::_command_who;  //--
         // auth_command_map["PRIVMSG"] = &Command::_command_privmsg;  //--
         // command_map["KILL"] = &Command::_command_kill;  //--
     }
@@ -148,31 +148,37 @@ void Command::_command_quit(void) {
 
     if (this->_user.is_server_oper()) this->_user.set_server_oper();
 
-    if (this->_server.get_users_in_server().size() != 1 && !this->_server.find_server_oper()) {
+    if (_server.get_users_in_server().size() != 1 && !_server.find_server_oper()) {
         User* user;
-        user = this->_server.find_next_server_oper(this->_user.get_user_fd());
+        user = _server.find_next_server_oper(this->_user.get_user_fd());
         if (user != NULL) {
             user->set_server_oper();
             _message_to_user(":You are now an IRC operator", "381", user->get_user_fd());
         }
     }
-    /* for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) { */
-    /*     if ((*it)->get_size() != 1) { */
-    /*         User* user = (*it)->get_user_channel(username); */
-    /*         if (user != NULL) { */
-    /*             if (user->is_oper_in_channel()) { */
-    /*                 User* new_user = find_next_oper(user); // Encontrar próximo operador */
-    /*                 if (new_user != NULL) { */
-    /*                     new_user->set_oper_in_channel(true); // Configurar new_user como operador no canal */
-    /*                     new_user.oper_map[(*it)->get_name_channel] = true; */
-    /*                     _user.oper_map.erase((*it)->get_name_channel()); */
-    /*             } */
-    /*         } */
-    /*     } */
-    /* } */
+
+    std::vector<std::string> channels_to_flush;
+    for (std::map<std::string, bool>::iterator it = _user.user_channel_info.begin();
+         it != _user.user_channel_info.end(); it++) {
+        std::string channel_name = it->first;
+        Channel* channel = _server.get_channel_by_name(channel_name);  // Encontra o canal pelo nome
+        if (channel != NULL &&
+            channel->get_channel_size() != 1) {                   // Verifica se o canal existe e tem mais de uma pessoa
+            if (_user.user_channel_info[channel_name] == true) {  // Verifica se o usuário é operador no canal
+                User* new_user = channel->find_next_channel_oper(_user.get_user_fd());  // Encontra o próximo operador
+                if (new_user != NULL) {
+                    new_user->user_channel_info[channel_name] = true;
+                    channels_to_flush.push_back(channel_name);
+                }
+            }
+        }
+    }
 
     std::cout << "User left. FD: " << this->_user.get_user_fd() << std::endl;
-    this->_server.delete_user(this->_user.get_user_fd());
+    _server.delete_user(this->_user.get_user_fd());
+    for (std::vector<std::string>::iterator it = channels_to_flush.begin(); it != channels_to_flush.end(); ++it) {
+        _flush_hex((*it));
+    }
 }
 
 void Command::_command_oper(void) {
@@ -204,7 +210,6 @@ void Command::_command_join(void) {
         /* _give_oper_to_creator(channel->get_name()); */
     }
 
-
     if (channel->get_user_in_channel(this->_user.get_nick()) != NULL)
         return (_message_to_user(":is already on channel", "443"));
     if (password == channel->get_password())
@@ -212,4 +217,82 @@ void Command::_command_join(void) {
     else
         return _message_to_user(":Password incorrect", "464");
     channel->message_to_channel(":" + this->_user.get_nick() + " JOIN " + channel->get_channel_name());
+}
+
+void Command::_command_who(void) {
+    if (this->_args.size() > 2) return _message_to_user(":Not enough parameters", "461");
+
+    std::string response;
+    std::vector<User*> users = _server.get_users_in_server();
+    std::string target = _args.size() > 0 ? _args[0] : "";
+
+    int i = 0;
+    if (target.empty()) {  // if /who look for servers opers
+        for (std::vector<User*>::iterator it = users.begin(); it != users.end(); it++) {
+            std::ostringstream oss;
+            oss << i;
+            std::string indexString = oss.str();
+
+            response = ":" + this->_user.get_servername() + " 352 " + this->_user.get_nick() + " * " +
+                       (*it)->get_username() + " " + (*it)->get_hostname() + " " + (*it)->get_servername();
+            response += (*it)->is_server_oper() ? " H :" + indexString + " @" : " :" + indexString + " ";
+            response += (*it)->get_nick() + "\r\n";
+            if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0)
+                Utils::error_message("send:", strerror(errno));
+            i++;
+        }
+    }
+    if (target[0] == '#') {
+        _flush_hex(this->_args[0]);
+        Channel* channel = _server.get_channel_by_name(target);
+        if (channel == NULL) return _message_to_user(":No such channel", "403");
+
+        std::vector<User*> tmp = channel->get_user_list();
+        for (std::vector<User*>::iterator it = tmp.begin(); it != tmp.end(); it++) {
+            std::ostringstream oss;
+            oss << i;
+            std::string indexString = oss.str();
+            response = ":" + this->_user.get_servername() + " 352 " + this->_user.get_nick() + " :" +
+                       channel->get_channel_name() + " " + (*it)->get_username() + " " + (*it)->get_hostname() + " " +
+                       (*it)->get_servername();
+            if ((*it)->user_channel_info.find(channel->get_channel_name()) != (*it)->user_channel_info.end() &&
+                (*it)->user_channel_info[channel->get_channel_name()] == true) {
+                response += " H :" + indexString + " @";
+            } else {
+                response += " :" + indexString + " ";
+            }
+            response += (*it)->get_nick() + "\r\n";
+
+            if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0)
+                Utils::error_message("send:", strerror(errno));
+            i++;
+        }
+    }
+    response = ":" + _user.get_servername() + " " + "315" + " " + _user.get_nick() + " " + ":End of /WHO list.\r\n";
+    if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0)
+        Utils::error_message("send:", strerror(errno));
+}
+
+void Command::_flush_hex(std::string channel_target) {
+    std::string response;
+
+    Channel* channel = _server.get_channel_by_name(channel_target);
+
+    std::vector<User*> user_list = channel->get_user_list();
+    for (std::vector<User*>::iterator listIt = user_list.begin(); listIt != user_list.end(); listIt++) {
+        std::vector<User*> tmp = channel->get_user_list();
+        response = ":" + (*listIt)->get_servername() + " " + "353" + " " + (*listIt)->get_nick() + " = " +
+                   channel->get_channel_name() + " :";
+        for (std::vector<User*>::iterator it = tmp.begin(); it != tmp.end(); it++) {
+            response += (*it)->user_channel_info.find(channel->get_channel_name()) != (*it)->user_channel_info.end() &&
+                                (*it)->user_channel_info[channel->get_channel_name()] == true
+                            ? "@"
+                            : "";
+            response += (*it)->get_nick() + " ";
+        }
+        response += "\r\n:" + (*listIt)->get_servername() + " " + "366" + " " + (*listIt)->get_nick() + " " +
+                    channel->get_channel_name() + " :End of /NAMES list.\r\n";
+        if (send((*listIt)->get_user_fd(), response.c_str(), response.size(), 0) < 0)
+            Utils::error_message("send:", strerror(errno));
+    }
 }

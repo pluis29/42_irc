@@ -29,15 +29,15 @@ std::string User::get_username(void) const { return _username; }
 int User::get_user_fd(void) const { return _user_fd; }
 
 void User::add_channel(Channel* channel) {
-    std::map<std::string, bool>::iterator it = user_channels.find(channel->get_channel_name());
+    std::map<std::string, bool>::iterator it = user_channel_info.find(channel->get_channel_name());
     // Verifica se o canal já existe nos canais do usuário
-    if (it != user_channels.end()) {
-        return; // Canal já existe, não faz nada
+    if (it != user_channel_info.end()) {
+        return;  // Canal já existe, não faz nada
     }
 
-    user_channels.insert(std::make_pair(channel->get_channel_name(), false));
+    user_channel_info.insert(std::make_pair(channel->get_channel_name(), false));
     if (!channel->find_channel_oper()) {
-        user_channels[channel->get_channel_name()] = true;
+        user_channel_info[channel->get_channel_name()] = true;
         std::string response = ":" + _nick + "!" + _username + "@" + _hostname +
                                " MODE :" + channel->get_channel_name() + " +o " + _nick + "\r\n";
         if (send(_user_fd, response.c_str(), strlen(response.c_str()), 0) < 0)
