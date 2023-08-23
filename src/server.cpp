@@ -1,10 +1,9 @@
 #include "server.hpp"
 
-#include <string>
-
 #include "command.hpp"
 #include "user.hpp"
 #include "utils.hpp"
+#include "channel.hpp"
 
 Server::Server(const int port, const std::string password) : _host_ip(HOST_IP), _port(port), _password(password) {
     _set_server_socket();
@@ -72,12 +71,12 @@ void Server::run(void) {
 }
 
 void Server::_handle_polling(void) {
-    for (std::vector<pollfd>::iterator it = this->_pollfd_vector.begin(); it != this->_pollfd_vector.end(); it++) {
+    for (std::vector<pollfd>::iterator it = _pollfd_vector.begin(); it != _pollfd_vector.end(); it++) {
         if (it->revents && POLLIN) {
-            if (it->fd == this->_server_socket)
-                this->_create_user();
+            if (it->fd == _server_socket)
+                _create_user();
             else
-                this->_message_recived(it->fd);
+                _message_recived(it->fd);
             break;
         }
     }
@@ -120,18 +119,6 @@ void Server::_message_recived(int fd) {
     str.clear();
 }
 
-User *Server::get_user_by_fd(int user_fd) {
-    std::vector<User *>::iterator it = this->_users_vector.begin();
-
-    for (; it != this->_users_vector.end(); it++)
-        if ((*it)->get_user_fd() == user_fd) return *it;
-    return NULL;
-}
-
-std::string Server::get_password(void) const { return _password; }
-
-std::vector<User *> Server::get_users_in_server(void) const { return (this->_users_vector); }
-
 void Server::message_all_users(std::string msg, int user_fd) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
 
@@ -144,3 +131,77 @@ void Server::message_all_users(std::string msg, int user_fd) {
 
     return;
 }
+
+std::string Server::get_password(void) const { return _password; }
+
+std::vector<User *> Server::get_users_in_server(void) const { return (this->_users_vector); }
+
+User *Server::get_user_by_fd(int user_fd) {
+    std::vector<User *>::iterator it = this->_users_vector.begin();
+
+    for (; it != this->_users_vector.end(); it++)
+        if ((*it)->get_user_fd() == user_fd) return *it;
+    return NULL;
+}
+
+bool Server::find_server_oper(void) {
+    std::vector<User *>::iterator it = this->_users_vector.begin();
+    for (; it != this->_users_vector.end(); it++)
+        if ((*it)->is_server_oper()) return true;
+
+    return false;
+}
+
+User *Server::find_next_server_oper(int user_fd) {
+    std::vector<User *>::iterator userIt = this->_users_vector.begin();
+    for (; userIt != this->_users_vector.end(); userIt++) {
+        if (!((*userIt)->get_username().empty()) && (*userIt)->get_user_fd() != user_fd) return *userIt;
+    }
+    return NULL;
+}
+
+// voltar aqui com channel
+// colocar clear map
+void Server::delete_user(int fd) {
+    std::vector<User *>::iterator userIt = this->_users_vector.begin();
+    std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
+    /* std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin(); */
+
+    /* for (; channelIt != this->_channel_vector.end(); channelIt++) (*channelIt)->remove_user(get_user_fd(fd)); */
+
+    for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
+        if ((*pollIt).fd == fd) {
+            this->_pollfd_vector.erase(pollIt);
+            close(fd);
+            break;
+        }
+    }
+
+    for (; userIt != this->_users_vector.end(); userIt++) {
+        if ((*userIt)->get_user_fd() == fd) {
+            delete *userIt;
+            this->_users_vector.erase(userIt);
+            break;
+        }
+    }
+}
+
+User *Server::get_user_byNick(std::string nick) {
+    std::vector<User *>::iterator it = this->_users_vector.begin();
+
+    for (; it != this->_users_vector.end(); it++)
+        if ((*it)->get_nick() == nick) return *it;
+    return NULL;
+}
+
+Channel *Server::get_channel_by_name(std::string name) {
+    std::vector<Channel *>::iterator it = _channel_vector.begin();
+
+    if (name[0] != '#') name = '#' + name;
+    for (; it != _channel_vector.end(); it++) {
+        if ((*it)->get_channel_name() == name) return (*it);
+    }
+    return NULL;
+}
+
+void Server::add_channel(Channel *channel) { this->_channel_vector.push_back(channel); }

@@ -2,7 +2,7 @@ P_SRC = src/
 P_INCLUDE = includes/
 P_OBJ = obj/
 
-F_SRC = main.cpp server.cpp utils.cpp user.cpp command.cpp
+F_SRC = main.cpp server.cpp utils.cpp user.cpp command.cpp channel.cpp
 
 OBJ = $(addprefix $(P_OBJ), $(F_SRC:%.cpp=%.o))
 

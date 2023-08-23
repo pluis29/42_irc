@@ -5,7 +5,7 @@
 
 // #define COMMAND_USER 1
 // #define ANY_COMMAND 0
-// #define OPERATOR_PASS "aprovado"
+#define OPERATOR_PASS "ok"
 
 class Server;
 class User;
@@ -30,6 +30,9 @@ class Command {
     void _command_pass(void);
     void _command_nick(void);
     void _command_user(void);
+    void _command_quit(void);
+    void _command_oper(void);
+    void _command_join(void);
 };
 
 #endif
