@@ -51,6 +51,10 @@ class Command {
     void _unset_invite_only(Channel* channel, std::string argument);
     void _set_channel_key(Channel* channel, std::string argument);
     void _unset_channel_key(Channel* channel, std::string argument);
+    void _set_topic_restriction(Channel* channel, std::string argument);
+    void _unset_topic_restriction(Channel* channel, std::string argument);
+    void _set_user_limit(Channel* channel, std::string argument);
+    void _unset_user_limit(Channel* channel, std::string argument);
 };
 
 #endif

@@ -69,10 +69,6 @@ void User::add_channel(Channel* channel) {
 
     if (!channel->find_channel_oper()) {
         user_channel_info[channel->get_channel_name()] = true;
-        std::string response = ":" + _nick + "!" + _username + "@" + _hostname +
-                               " MODE :" + channel->get_channel_name() + " +o " + _nick + "\r\n";
-        if (send(_user_fd, response.c_str(), strlen(response.c_str()), 0) < 0)
-            Utils::error_message("send:", strerror(errno));
     }
 
     channel->add_user(this);
@@ -84,12 +80,6 @@ bool User::is_oper_in_channel(const std::string& channel_name) {
     if (it != user_channel_info.end() && it->second) {
         return true;
     }
-    return false;
-}
-
-bool User::is_member_of_channel(const std::string& channel_name) {
-    std::map<std::string, bool>::iterator it = user_channel_info.find(channel_name);
-    if (it != user_channel_info.end()) return true;
     return false;
 }
 

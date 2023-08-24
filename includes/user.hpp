@@ -35,7 +35,6 @@ class User {
     void add_channel(Channel* channel);
     void remove_channel(std::string channel_name);
     bool is_oper_in_channel(const std::string& channel_name);
-    bool is_member_of_channel(const std::string& channel_name);
     bool is_invited_to_channel(std::string channel_name);
 
     std::map<std::string, bool> user_channel_info;

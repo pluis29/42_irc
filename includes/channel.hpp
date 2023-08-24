@@ -21,6 +21,7 @@ class Channel {
     std::vector<User*> get_user_list(void) const;
 
     bool find_channel_oper(void);
+    bool find_user_in_channel(int user_fd);
 
     User* find_next_channel_oper(int user_fd);
     int get_channel_size() const;
@@ -30,7 +31,12 @@ class Channel {
     void set_topic(std::string topic);
 
     bool is_invite_only(void);
+    bool is_topic_restricted(void);
+    bool is_user_limit(void);
     bool invite_only;
+    bool topic_restrict;
+    bool have_user_limit;
+    int user_limit;
     std::string password;
 
    private:

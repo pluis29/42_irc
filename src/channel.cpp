@@ -8,7 +8,8 @@
 #include "user.hpp"
 #include "utils.hpp"
 
-Channel::Channel(std::string name, std::string password) : invite_only(false), _name(name), password(password) {
+Channel::Channel(std::string name, std::string password)
+    : have_user_limit(false), invite_only(false), topic_restrict(false), _name(name), password(password) {
     return;
 }
 
@@ -120,3 +121,18 @@ void Channel::set_topic(std::string topic) { _topic = topic; }
 std::string Channel::get_topic(void) const { return _topic; }
 
 bool Channel::is_invite_only(void) { return invite_only; }
+
+bool Channel::is_topic_restricted(void) { return topic_restrict; }
+
+bool Channel::is_user_limit(void) { return have_user_limit; }
+
+bool Channel::find_user_in_channel(int user_fd) {
+    for (std::vector<User*>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
+        if ((*it)->get_user_fd() == user_fd) {
+            std::cout << "achou\n";
+            return true;
+        }
+    }
+    std::cout << "nao achou\n";
+    return false;
+}

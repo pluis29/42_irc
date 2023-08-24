@@ -1,5 +1,6 @@
 #include "command.hpp"
 
+#include <cstdlib>
 #include <string>
 
 #include "channel.hpp"
@@ -258,6 +259,10 @@ void Command::_command_join(void) {
         _server.add_channel(channel);  // add the channel in the vector of channels
     }
 
+    std::cout << channel->user_limit << std::endl;
+    if (channel->is_user_limit() && channel->get_channel_size() >= channel->user_limit) {
+        return _message_to_user(":Cannot join channel (+l)", "471", 0, channel->get_channel_name());
+    }
     if (channel->is_invite_only())
         if (!_user.is_invited_to_channel(channel->get_channel_name()))
             return _message_to_user(":Cannot join channel (+i)", "473", 0, channel->get_channel_name());
@@ -338,19 +343,35 @@ void Command::_command_topic(void) {
         return _message_to_user(":" + channel->get_topic(), "332", 0, channel_name);
     } else {
         // User is trying to set a new topic
-        if (_user.is_oper_in_channel(channel_name)) {
+        /* if (_user.is_oper_in_channel(channel_name)) { */
+        /* std::string new_topic = Utils::joinToString(_args.begin() + 1, _args.end()); */
+        /* std::string response = ":" + _user.get_nick() + "!" + _user.get_username() + "@" + _user.get_hostname() + */
+        /*                        " TOPIC " + channel_name + " :" + new_topic + "\r\n"; */
+        /*     if (new_topic.empty()) { */
+        /*         channel->clear_topic(); */
+        /*         channel->message_to_channel(response); */
+        /*     } else { */
+        /*         channel->set_topic(new_topic); */
+        /*         channel->message_to_channel(response); */
+        /*     } */
+        /* } else { */
+        /*     _message_to_user(":You're not channel operator", "482", 0, channel_name); */
+        /* } */
+
+        if (channel->is_topic_restricted() && !_user.is_oper_in_channel(channel_name)) {
             std::string new_topic = Utils::joinToString(_args.begin() + 1, _args.end());
-            std::string response = ":" + _user.get_nick() + "!" + _user.get_username() + "@" + _user.get_hostname() +
-                                   " TOPIC " + channel_name + " :" + new_topic + "\r\n";
-            if (new_topic.empty()) {
-                channel->clear_topic();
-                channel->message_to_channel(response);
-            } else {
-                channel->set_topic(new_topic);
-                channel->message_to_channel(response);
-            }
+            return _message_to_user(":You're not channel operator", "482", 0, channel_name);
+        }
+
+        std::string new_topic = Utils::joinToString(_args.begin() + 1, _args.end());
+        std::string response = ":" + _user.get_nick() + "!" + _user.get_username() + "@" + _user.get_hostname() +
+                               " TOPIC " + channel_name + " :" + new_topic + "\r\n";
+        if (new_topic.empty()) {
+            channel->clear_topic();
+            channel->message_to_channel(response);
         } else {
-            _message_to_user(":You're not channel operator", "482", 0, channel_name);
+            channel->set_topic(new_topic);
+            channel->message_to_channel(response);
         }
     }
 }
@@ -367,7 +388,8 @@ void Command::_command_invite(void) {
     if (target_user == NULL) return _message_to_user(":No such nick", "401", 0, target_nick);
     if (target_channel == NULL) return _message_to_user(":No such channel", "403", 0, channel_name);
 
-    if (!_user.is_member_of_channel(channel_name))
+    if (!target_channel->find_user_in_channel(_user.get_user_fd()))
+    /* if (!_user.is_member_of_channel(channel_name)) */
         return _message_to_user(":You're not on that channel", "442", 0, channel_name);
     if (target_channel->is_invite_only() && !_user.is_oper_in_channel(channel_name))
         return _message_to_user(":You're not channel operator", "482", 0, channel_name);
@@ -449,37 +471,38 @@ void Command::_command_mode(void) {
     std::map<std::string, ModeAction> mode_actions;
     mode_actions["+i"] = &Command::_set_invite_only;
     mode_actions["-i"] = &Command::_unset_invite_only;
-    /* mode_actions["+t"] = &Command::_set_topic_restriction; */
-    /* mode_actions["-t"] = &Command::_unset_topic_restriction; */
+    mode_actions["+t"] = &Command::_set_topic_restriction;
+    mode_actions["-t"] = &Command::_unset_topic_restriction;
     mode_actions["+k"] = &Command::_set_channel_key;
     mode_actions["-k"] = &Command::_unset_channel_key;
     /* mode_actions["+o"] = &Command::_set_channel_operator; */
     /* mode_actions["-o"] = &Command::_unset_channel_operator; */
-    /* mode_actions["+l"] = &Command::_set_user_limit; */
-    /* mode_actions["-l"] = &Command::_unset_user_limit; */
+    mode_actions["+l"] = &Command::_set_user_limit;
+    mode_actions["-l"] = &Command::_unset_user_limit;
 
     if (_args.size() < 2) return _message_to_user(":Not enough parameters", "461", 0, _command);
     std::string channel_name = _args[0];
     Channel* channel = _server.get_channel_by_name(channel_name);
 
     if (channel == NULL) return _message_to_user(":No such channel", "403", 0, channel_name);
-    if (!_user.is_member_of_channel(channel_name))
+    if (!channel->find_user_in_channel(_user.get_user_fd()))
+    /* if (!_user.is_member_of_channel(channel_name)) */
         return _message_to_user(":You're not on that channel", "442", 0, channel_name);
     if (!_user.is_oper_in_channel(channel_name))
         return _message_to_user(":You're not channel operator", "482", 0, channel_name);
 
-    for (size_t i = 1; i < _args.size(); ++i) {
-        std::string mode = _args[i];
-        std::cout << i << "====" << mode << std::endl << std::endl;
-    }
-
     std::string mode = _args[1];
     if (mode_actions.find(mode) != mode_actions.end()) {
         if (mode_need_args(mode) && _args.size() < 3)
-            return _message_to_user(":Not enough parameters", "461", 0, _command);
+            return _message_to_user(":Not enough parameters", "461", 0, channel_name + " " + _command);
+
         std::string argument;
         if (mode_need_args(mode)) argument = _args[2];
-
+        if (mode == "+l") {
+            for (size_t i = 0; i < argument.length(); ++i) {
+                if (!isdigit(argument[i])) return;
+            }
+        }
         (this->*mode_actions[mode])(channel, argument);
     } else {
         return _message_to_user(":is unknown mode char to me for " + channel_name, "472", 0, mode);
@@ -492,7 +515,7 @@ void Command::_command_mode(void) {
 }
 
 bool Command::mode_need_args(std::string mode) {
-    if (mode == "+o" || mode == "-o" || mode == "+k" || mode == "-l") return true;
+    if (mode == "+o" || mode == "-o" || mode == "+k" || mode == "+l") return true;
     return false;
 }
 
@@ -501,3 +524,17 @@ void Command::_unset_invite_only(Channel* channel, std::string argument) { chann
 
 void Command::_set_channel_key(Channel* channel, std::string argument) { channel->password = argument; }
 void Command::_unset_channel_key(Channel* channel, std::string argument) { channel->password = ""; }
+
+void Command::_set_topic_restriction(Channel* channel, std::string argument) { channel->topic_restrict = true; }
+void Command::_unset_topic_restriction(Channel* channel, std::string argument) { channel->topic_restrict = false; }
+
+void Command::_set_user_limit(Channel* channel, std::string argument) {
+    channel->user_limit = atoi(argument.c_str());
+    channel->have_user_limit = true;
+}
+void Command::_unset_user_limit(Channel* channel, std::string argument) { channel->have_user_limit = false; }
+
+/* void Command::_set_channel_operator(Channel* channel, std::string argument) { */
+
+/* } */
+/* _unset_channel_operator; */
