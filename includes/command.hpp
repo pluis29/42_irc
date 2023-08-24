@@ -9,6 +9,7 @@
 
 class Server;
 class User;
+class Channel;
 
 class Command {
    public:
@@ -43,6 +44,13 @@ class Command {
     void _command_part(void);
     void _command_topic(void);
     void _command_invite(void);
+    void _command_mode(void);
+
+    bool mode_need_args(std::string mode);
+    void _set_invite_only(Channel* channel, std::string argument);
+    void _unset_invite_only(Channel* channel, std::string argument);
+    void _set_channel_key(Channel* channel, std::string argument);
+    void _unset_channel_key(Channel* channel, std::string argument);
 };
 
 #endif

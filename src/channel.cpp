@@ -8,7 +8,7 @@
 #include "user.hpp"
 #include "utils.hpp"
 
-Channel::Channel(std::string name, std::string password) : _invite_only(false), _name(name), _password(password) {
+Channel::Channel(std::string name, std::string password) : invite_only(false), _name(name), password(password) {
     return;
 }
 
@@ -28,7 +28,7 @@ User* Channel::get_user_in_channel(std::string nick) {
     return (NULL);
 }
 
-std::string Channel::get_password(void) { return this->_password; }
+std::string Channel::get_password(void) { return this->password; }
 
 void Channel::message_to_channel(std::string msg, int exclude_fd) {
     std::vector<User*>::iterator it = this->_users.begin();
@@ -79,12 +79,32 @@ void Channel::remove_user(User* user) {
     return;
 }
 
+/* User* Channel::find_next_channel_oper(int user_fd) { */
+/*     for (std::vector<User*>::iterator it = this->_users.begin(); it != this->_users.end(); it++) { */
+/*         std::cout << "k1\n"; */
+/*         if ((*it)->get_user_fd() != user_fd) { */
+/*             std::cout << "k2\n"; */
+/*             std::map<std::string, bool>::iterator map_it = (*it)->user_channel_info.find(_name); */
+/*             if (map_it != (*it)->user_channel_info.end()) { */
+/*                 std::cout << "k3: Found map entry\n"; */
+/*                 if (map_it->second) { */
+/*                     std::cout << "k4: Entry is true\n"; */
+/*                 } else { */
+/*                     std::cout << "k5: Entry is false\n"; */
+/*                     return (*it); */
+/*                 } */
+/*             } else { */
+/*                 std::cout << "k6: Entry not found\n"; */
+/*             } */
+/*         } */
+/*     } */
+/*     return NULL; */
+/* } */
+
 User* Channel::find_next_channel_oper(int user_fd) {
     for (std::vector<User*>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
         if ((*it)->get_user_fd() != user_fd) {
-            std::map<std::string, bool>::iterator map_it = (*it)->user_channel_info.find(_name);
-            std::cout << map_it->first << "\n";
-            if (map_it != (*it)->user_channel_info.end() && !map_it->second) {
+            if (!(*it)->user_channel_info[_name]) {
                 return (*it);
             }
         }
@@ -99,4 +119,4 @@ void Channel::set_topic(std::string topic) { _topic = topic; }
 
 std::string Channel::get_topic(void) const { return _topic; }
 
-bool Channel::is_invite_only(void) { return _invite_only; }
+bool Channel::is_invite_only(void) { return invite_only; }

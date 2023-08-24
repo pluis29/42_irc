@@ -42,6 +42,7 @@ void Command::_handle_command(void) {
         command_map["PART"] = &Command::_command_part;
         command_map["TOPIC"] = &Command::_command_topic;
         command_map["INVITE"] = &Command::_command_invite;
+        command_map["MODE"] = &Command::_command_mode;
     }
 
     std::map<std::string, command_handler>::iterator it = command_map.find(this->_command);
@@ -118,14 +119,14 @@ std::vector<std::string> Command::set_next_channel_oper(bool shouldUseLoop, std:
     if (shouldUseLoop) {
         for (std::map<std::string, bool>::iterator it = _user.user_channel_info.begin();
              it != _user.user_channel_info.end(); it++) {
-            std::string channel_name = it->first;
-            Channel* channel = _server.get_channel_by_name(channel_name);  // Encontra o canal pelo nome
+            std::string for_channel_name = it->first;
+            Channel* channel = _server.get_channel_by_name(for_channel_name);  // Encontra o canal pelo nome
             if (channel != NULL && channel->get_channel_size() != 1) {
-                channels_to_flush.push_back(channel_name);
+                channels_to_flush.push_back(for_channel_name);
                 if (it->second) {
                     User* new_user = channel->find_next_channel_oper(_user.get_user_fd());
                     if (new_user != NULL) {
-                        new_user->user_channel_info[channel_name] = true;
+                        new_user->user_channel_info[for_channel_name] = true;
                     }
                 }
             }
@@ -218,7 +219,8 @@ void Command::_command_quit(void) {
             _message_to_user(":You are now an IRC operator", "381", user->get_user_fd());
         }
     }
-    std::vector<std::string> channels_to_flush = set_next_channel_oper(true);
+    std::vector<std::string> channels_to_flush;
+    channels_to_flush = set_next_channel_oper(true, "");
 
     std::cout << "User left. FD: " << this->_user.get_user_fd() << std::endl;
     _server.delete_user(this->_user.get_user_fd());
@@ -440,3 +442,62 @@ void Command::_list_channel_oper(std::string channel_name) {
     if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0)
         Utils::error_message("send:", strerror(errno));
 }
+
+void Command::_command_mode(void) {
+    typedef void (Command::*ModeAction)(Channel*, std::string);
+
+    std::map<std::string, ModeAction> mode_actions;
+    mode_actions["+i"] = &Command::_set_invite_only;
+    mode_actions["-i"] = &Command::_unset_invite_only;
+    /* mode_actions["+t"] = &Command::_set_topic_restriction; */
+    /* mode_actions["-t"] = &Command::_unset_topic_restriction; */
+    mode_actions["+k"] = &Command::_set_channel_key;
+    mode_actions["-k"] = &Command::_unset_channel_key;
+    /* mode_actions["+o"] = &Command::_set_channel_operator; */
+    /* mode_actions["-o"] = &Command::_unset_channel_operator; */
+    /* mode_actions["+l"] = &Command::_set_user_limit; */
+    /* mode_actions["-l"] = &Command::_unset_user_limit; */
+
+    if (_args.size() < 2) return _message_to_user(":Not enough parameters", "461", 0, _command);
+    std::string channel_name = _args[0];
+    Channel* channel = _server.get_channel_by_name(channel_name);
+
+    if (channel == NULL) return _message_to_user(":No such channel", "403", 0, channel_name);
+    if (!_user.is_member_of_channel(channel_name))
+        return _message_to_user(":You're not on that channel", "442", 0, channel_name);
+    if (!_user.is_oper_in_channel(channel_name))
+        return _message_to_user(":You're not channel operator", "482", 0, channel_name);
+
+    for (size_t i = 1; i < _args.size(); ++i) {
+        std::string mode = _args[i];
+        std::cout << i << "====" << mode << std::endl << std::endl;
+    }
+
+    std::string mode = _args[1];
+    if (mode_actions.find(mode) != mode_actions.end()) {
+        if (mode_need_args(mode) && _args.size() < 3)
+            return _message_to_user(":Not enough parameters", "461", 0, _command);
+        std::string argument;
+        if (mode_need_args(mode)) argument = _args[2];
+
+        (this->*mode_actions[mode])(channel, argument);
+    } else {
+        return _message_to_user(":is unknown mode char to me for " + channel_name, "472", 0, mode);
+    }
+    std::string response = ":" + _user.get_nick() + " MODE " + channel_name + " " + mode;
+    if (_args.size() > 2) {
+        response += " " + _args[2];
+    }
+    _message_to_user(response, "324", _user.get_user_fd(), channel_name);
+}
+
+bool Command::mode_need_args(std::string mode) {
+    if (mode == "+o" || mode == "-o" || mode == "+k" || mode == "-l") return true;
+    return false;
+}
+
+void Command::_set_invite_only(Channel* channel, std::string argument) { channel->invite_only = true; }
+void Command::_unset_invite_only(Channel* channel, std::string argument) { channel->invite_only = false; }
+
+void Command::_set_channel_key(Channel* channel, std::string argument) { channel->password = argument; }
+void Command::_unset_channel_key(Channel* channel, std::string argument) { channel->password = ""; }

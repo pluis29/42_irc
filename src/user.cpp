@@ -60,12 +60,13 @@ void User::remove_channel(std::string channel_name) {
 
 void User::add_channel(Channel* channel) {
     std::map<std::string, bool>::iterator it = user_channel_info.find(channel->get_channel_name());
-    // Verifica se o canal já existe nos canais do usuário
-    if (it != user_channel_info.end()) {
-        return;  // Canal já existe, não faz nada
-    }
+    if (it != user_channel_info.end())
+        return;
 
-    user_channel_info.insert(std::make_pair(channel->get_channel_name(), false));
+    std::vector<std::string>::iterator vIt = std::find(channel_invites.begin(), channel_invites.end(), channel->get_channel_name());
+    if (vIt != channel_invites.end())
+        channel_invites.erase(vIt);
+
     if (!channel->find_channel_oper()) {
         user_channel_info[channel->get_channel_name()] = true;
         std::string response = ":" + _nick + "!" + _username + "@" + _hostname +

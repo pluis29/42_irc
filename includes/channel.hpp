@@ -30,13 +30,13 @@ class Channel {
     void set_topic(std::string topic);
 
     bool is_invite_only(void);
+    bool invite_only;
+    std::string password;
 
    private:
     std::string _name;
-    std::string _password;
     std::string _topic;
     std::vector<User*> _users;
-    bool _invite_only;
 };
 
 #endif
