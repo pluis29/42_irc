@@ -27,7 +27,7 @@ class Command {
     std::string _command;
 
     void _flush_hex(std::string channel_target);
-    std::vector<std::string> set_next_channel_oper(bool use_loop, std::string channel_name = "");
+    std::vector<std::string> set_next_channel_oper(bool shouldUseLoop, std::string channel_name = "");
     void _list_server_oper(void);
     void _list_channel_oper(std::string channel_name);
 
@@ -41,6 +41,8 @@ class Command {
     void _command_who(void);
     void _command_privmsg(void);
     void _command_part(void);
+    void _command_topic(void);
+    void _command_invite(void);
 };
 
 #endif

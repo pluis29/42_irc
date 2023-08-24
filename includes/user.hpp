@@ -1,6 +1,7 @@
 #ifndef USER_HPP_
 #define USER_HPP_
 
+#include <vector>
 #include "commonInclude.hpp"
 
 class Channel;
@@ -32,9 +33,13 @@ class User {
 
     void send_message_to_user(std::string message);
     void add_channel(Channel* channel);
-    void    remove_channel(std::string channel_name);
+    void remove_channel(std::string channel_name);
+    bool is_oper_in_channel(const std::string& channel_name);
+    bool is_member_of_channel(const std::string& channel_name);
+    bool is_invited_to_channel(std::string channel_name);
 
     std::map<std::string, bool> user_channel_info;
+    std::vector<std::string> channel_invites;
 
    private:
     int _user_fd;

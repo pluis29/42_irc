@@ -25,10 +25,18 @@ class Channel {
     User* find_next_channel_oper(int user_fd);
     int get_channel_size() const;
 
+    std::string get_topic(void) const;
+    void clear_topic(void);
+    void set_topic(std::string topic);
+
+    bool is_invite_only(void);
+
    private:
     std::string _name;
     std::string _password;
+    std::string _topic;
     std::vector<User*> _users;
+    bool _invite_only;
 };
 
 #endif

@@ -22,7 +22,7 @@ class Server {
     User *get_user_by_fd(int user_fd);
     std::string get_password(void) const;
     std::vector<User *> get_users_in_server(void) const;
-    User *get_user_byNick(std::string nick);
+    User *get_user_by_nick(std::string nick);
     Channel *get_channel_by_name(std::string name);
     void add_channel(Channel *channel);
 

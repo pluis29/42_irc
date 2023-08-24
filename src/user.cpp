@@ -28,26 +28,6 @@ std::string User::get_username(void) const { return _username; }
 
 int User::get_user_fd(void) const { return _user_fd; }
 
-void User::add_channel(Channel* channel) {
-    std::map<std::string, bool>::iterator it = user_channel_info.find(channel->get_channel_name());
-    // Verifica se o canal já existe nos canais do usuário
-    if (it != user_channel_info.end()) {
-        return;  // Canal já existe, não faz nada
-    }
-
-    user_channel_info.insert(std::make_pair(channel->get_channel_name(), false));
-    if (!channel->find_channel_oper()) {
-        user_channel_info[channel->get_channel_name()] = true;
-        std::string response = ":" + _nick + "!" + _username + "@" + _hostname +
-                               " MODE :" + channel->get_channel_name() + " +o " + _nick + "\r\n";
-        if (send(_user_fd, response.c_str(), strlen(response.c_str()), 0) < 0)
-            Utils::error_message("send:", strerror(errno));
-    }
-
-    channel->add_user(this);
-    return;
-}
-
 void User::set_server_oper(void) { _server_oper = !_server_oper; }
 
 void User::set_password_auth(void) { _password_auth = true; }
@@ -76,4 +56,47 @@ void User::remove_channel(std::string channel_name) {
     if (it != user_channel_info.end()) {
         user_channel_info.erase(it);
     }
+}
+
+void User::add_channel(Channel* channel) {
+    std::map<std::string, bool>::iterator it = user_channel_info.find(channel->get_channel_name());
+    // Verifica se o canal já existe nos canais do usuário
+    if (it != user_channel_info.end()) {
+        return;  // Canal já existe, não faz nada
+    }
+
+    user_channel_info.insert(std::make_pair(channel->get_channel_name(), false));
+    if (!channel->find_channel_oper()) {
+        user_channel_info[channel->get_channel_name()] = true;
+        std::string response = ":" + _nick + "!" + _username + "@" + _hostname +
+                               " MODE :" + channel->get_channel_name() + " +o " + _nick + "\r\n";
+        if (send(_user_fd, response.c_str(), strlen(response.c_str()), 0) < 0)
+            Utils::error_message("send:", strerror(errno));
+    }
+
+    channel->add_user(this);
+    return;
+}
+
+bool User::is_oper_in_channel(const std::string& channel_name) {
+    std::map<std::string, bool>::iterator it = user_channel_info.find(channel_name);
+    if (it != user_channel_info.end() && it->second) {
+        return true;
+    }
+    return false;
+}
+
+bool User::is_member_of_channel(const std::string& channel_name) {
+    std::map<std::string, bool>::iterator it = user_channel_info.find(channel_name);
+    if (it != user_channel_info.end()) return true;
+    return false;
+}
+
+bool User::is_invited_to_channel(std::string channel_name) {
+    for (std::vector<std::string>::const_iterator it = channel_invites.begin(); it != channel_invites.end(); ++it) {
+        if (*it == channel_name) {
+            return true;
+        }
+    }
+    return false;
 }

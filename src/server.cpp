@@ -138,18 +138,6 @@ void Server::message_all_users(std::string msg, int user_fd) {
     return;
 }
 
-std::string Server::get_password(void) const { return _password; }
-
-std::vector<User *> Server::get_users_in_server(void) const { return (this->_users_vector); }
-
-User *Server::get_user_by_fd(int user_fd) {
-    std::vector<User *>::iterator it = this->_users_vector.begin();
-
-    for (; it != this->_users_vector.end(); it++)
-        if ((*it)->get_user_fd() == user_fd) return *it;
-    return NULL;
-}
-
 bool Server::find_server_oper(void) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
     for (; it != this->_users_vector.end(); it++)
@@ -192,7 +180,13 @@ void Server::delete_user(int fd) {
     }
 }
 
-User *Server::get_user_byNick(std::string nick) {
+void Server::add_channel(Channel *channel) { this->_channel_vector.push_back(channel); }
+
+std::string Server::get_password(void) const { return _password; }
+
+std::vector<User *> Server::get_users_in_server(void) const { return (this->_users_vector); }
+
+User *Server::get_user_by_nick(std::string nick) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
 
     for (; it != this->_users_vector.end(); it++)
@@ -210,4 +204,10 @@ Channel *Server::get_channel_by_name(std::string name) {
     return NULL;
 }
 
-void Server::add_channel(Channel *channel) { this->_channel_vector.push_back(channel); }
+User *Server::get_user_by_fd(int user_fd) {
+    std::vector<User *>::iterator it = this->_users_vector.begin();
+
+    for (; it != this->_users_vector.end(); it++)
+        if ((*it)->get_user_fd() == user_fd) return *it;
+    return NULL;
+}

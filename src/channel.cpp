@@ -8,7 +8,9 @@
 #include "user.hpp"
 #include "utils.hpp"
 
-Channel::Channel(std::string name, std::string password) : _name(name), _password(password) { return; }
+Channel::Channel(std::string name, std::string password) : _invite_only(false), _name(name), _password(password) {
+    return;
+}
 
 Channel::~Channel(void) { return; }
 
@@ -90,3 +92,11 @@ User* Channel::find_next_channel_oper(int user_fd) {
     return NULL;
 }
 int Channel::get_channel_size() const { return _users.size(); }
+
+void Channel::clear_topic(void) { _topic.clear(); }
+
+void Channel::set_topic(std::string topic) { _topic = topic; }
+
+std::string Channel::get_topic(void) const { return _topic; }
+
+bool Channel::is_invite_only(void) { return _invite_only; }
