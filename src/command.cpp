@@ -28,15 +28,15 @@ void Command::_parse_buffer(std::string buffer) {
 void Command::_handle_command(void) {
     std::map<std::string, command_handler> command_map;
 
-    command_map["PASS"] = &Command::_command_pass;  // --
-    command_map["NICK"] = &Command::_command_nick;  // --
-    command_map["USER"] = &Command::_command_user;  // --
+    command_map["PASS"] = &Command::_command_pass;
+    command_map["NICK"] = &Command::_command_nick;
+    command_map["USER"] = &Command::_command_user;
     command_map["QUIT"] = &Command::_command_quit;
     if (_user.is_general_auth()) {
-        command_map["OPER"] = &Command::_command_oper;  //--
+        command_map["OPER"] = &Command::_command_oper;
         command_map["JOIN"] = &Command::_command_join;
-        command_map["WHO"] = &Command::_command_who;          //--
-        command_map["PRIVMSG"] = &Command::_command_privmsg;  //--
+        command_map["WHO"] = &Command::_command_who;
+        command_map["PRIVMSG"] = &Command::_command_privmsg;
         command_map["PART"] = &Command::_command_part;
         command_map["TOPIC"] = &Command::_command_topic;
         command_map["INVITE"] = &Command::_command_invite;
