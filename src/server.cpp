@@ -151,8 +151,6 @@ User *Server::find_next_server_oper(int user_fd) {
     return NULL;
 }
 
-// voltar aqui com channel
-// colocar clear map
 void Server::delete_user(int fd) {
     std::vector<User *>::iterator userIt = this->_users_vector.begin();
     std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();

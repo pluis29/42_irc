@@ -10,7 +10,7 @@ Command::Command(std::string buffer, User& user, Server& server) : _user(user), 
     _handle_command();
 }
 
-Command::~Command(void) { return; }
+Command::~Command(void) {}
 
 void Command::_parse_buffer(std::string buffer) {
     if (buffer[0] == '/') buffer.erase(0, 1);
@@ -48,23 +48,16 @@ void Command::_handle_command(void) {
         (this->*(it->second))();
         return;
     } else
-        return _invalid_command();
+        _invalid_command();
 }
 
 void Command::_invalid_command(void) {
-    if (!_user.is_password_auth()) {
-        _message_to_user("Authenticate is required: usage: /PASS <password>", "464");
-        return;
-    }
-    if (_user.get_nick().empty()) {
-        _message_to_user("A nick must be provide: usage: /NICK <nick>", "431");
-        return;
-    }
+    if (!_user.is_password_auth()) return _message_to_user("Authenticate is required: usage: /PASS <password>", "464");
+    if (_user.get_nick().empty()) return _message_to_user("A nick must be provide: usage: /NICK <nick>", "431");
     if (_user.get_username().empty()) {
-        _message_to_user("A user must be provide: usage: /USER <username> <hostname> "
-                         "<servername> <realname>",
-                         "431");
-        return;
+        return _message_to_user("A user must be provide: usage: /USER <username> <hostname> "
+                                "<servername> <realname>",
+                                "431");
     }
     _message_to_user(_command + " :Unknown command", "421");
 }
@@ -103,7 +96,7 @@ void Command::_flush_hex(std::string channel_target) {
 }
 
 /**
- * @brief search for next oper in channel if necessary
+ * @brief take all channels to flush after leave search for next oper in channel if necessary
  *
  * @param shouldUseLoop true: for search in all channel that user are member false: look in one chat in specific
  * @param channel_name if shouldUseLoop false set this for channel_name else do not use
@@ -114,17 +107,12 @@ void Command::_flush_hex(std::string channel_target) {
 std::vector<std::string> Command::_set_next_channel_oper(bool shouldUseLoop, std::string channel_name) {
     std::vector<std::string> channels_to_flush;
 
-    std::cout << "1\n";
-    std::cout << "y "<<_user.user_channel_info.size() << std::endl;
     if (shouldUseLoop) {
         for (std::map<std::string, bool>::iterator it = _user.user_channel_info.begin();
              it != _user.user_channel_info.end(); it++) {
-            std::cout << "2\n";
             std::string for_channel_name = it->first;
             Channel* channel = _server.get_channel_by_name(for_channel_name);  // Encontra o canal pelo nome
-            std::cout << "3\n";
             if (channel != NULL && channel->get_channel_size() != 1) {
-                std::cout << "4\n";
                 channels_to_flush.push_back(for_channel_name);
                 if (it->second) {
                     User* new_user = channel->find_next_channel_oper(_user.get_user_fd());
@@ -154,7 +142,7 @@ std::vector<std::string> Command::_set_next_channel_oper(bool shouldUseLoop, std
 
 void Command::_command_pass(void) {
     if (_user.is_password_auth()) return (_message_to_user(":Unauthorized command (already registered)", "462"));
-    if (_args.empty() || _args.size() != 1) return (_message_to_user(":Not enough parameters", "461"));
+    if (_args.empty() || _args.size() != 1) return (_message_to_user(":Not enough parameters", "461", 0, _command));
     if (_args[0] == _server.get_password()) {
         _user.set_password_auth();
         return (_message_to_user(":Password Correct", "001"));
@@ -166,12 +154,12 @@ void Command::_command_nick(void) {
     if (!_user.is_password_auth()) return _invalid_command();
     if (_args.size() != 1) return (_message_to_user(":No nickname given", "431"));
     if (_args[0].empty() || Utils::check_invalid_char(_args[0]))
-        return (_message_to_user(":Erroneous nickname", "432"));
+        return (_message_to_user(":Erroneous nickname", "432", 0, _args[0]));
 
     std::vector<User*> users;
     users = _server.get_users_in_server();
     for (std::vector<User*>::iterator it = users.begin(); it != users.end(); it++) {
-        if (_args[0] == (*it)->get_nick()) return (_message_to_user(":Nickname is already in use", "433"));
+        if (_args[0] == (*it)->get_nick()) return (_message_to_user(":Nickname is already in use", "433", 0, _args[0]));
     }
 
     std::string response;
@@ -192,17 +180,16 @@ void Command::_command_nick(void) {
 void Command::_command_user(void) {
     if (!_user.is_password_auth() || _user.get_nick().empty()) return _invalid_command();
 
-    if (this->_args.size() != 4) return _message_to_user(":Not enough parameters", "461");
+    if (_args.size() != 4) return _message_to_user(":Not enough parameters", "461", 0, _command);
 
-    if (this->_user.get_username().empty() == false)
+    if (_user.get_username().empty() == false)
         return _message_to_user(":Unauthorized command (already registered)", "462");
 
-    this->_user.set_username(this->_args[0]);
-    this->_user.set_realname(this->_args[3]);
+    _user.set_username(_args[0]);
+    _user.set_realname(_args[3]);
 
-    _message_to_user("Welcome to the ft_irc " + this->_user.get_nick() + "!" + this->_user.get_username() + "@" +
-                         this->_user.get_hostname(),
-                     "001");
+    _message_to_user(
+        "Welcome to the ft_irc " + _user.get_nick() + "!" + _user.get_username() + "@" + _user.get_hostname(), "001");
 
     _user.set_general_auth();
     if (!_server.find_server_oper()) {
@@ -224,7 +211,6 @@ void Command::_command_quit(void) {
     }
     std::vector<std::string> channels_to_flush;
     channels_to_flush = _set_next_channel_oper(true, "");
-    std::cout<<channels_to_flush.size() <<std::endl;
 
     std::cout << "User left. FD: " << this->_user.get_user_fd() << std::endl;
     _server.delete_user(this->_user.get_user_fd());
@@ -237,9 +223,9 @@ void Command::_command_quit(void) {
 void Command::_command_oper(void) {
     User* user;
 
-    if (_args.size() != 2) return (_message_to_user(":Not enough parameters", "461"));
+    if (_args.size() != 2) return (_message_to_user(":Not enough parameters", "461", 0, _command));
     user = _server.get_user_by_nick(_args[0]);
-    if (user == NULL) return (_message_to_user(":No such nick", "401"));
+    if (user == NULL) return (_message_to_user(":No such nick", "401", 0, _args[0]));
     if (user->is_server_oper()) return (_message_to_user(":You are already an operator.", "690"));
     if (_args[1] != OPERATOR_PASS) return (_message_to_user(":Password incorrect", "464"));
     user->set_server_oper();
@@ -252,8 +238,9 @@ void Command::_command_join(void) {
     std::string password;
 
     if (_args[0][0] != '#') _args[0] = "#" + _args[0];
-    if (_args.size() < 1 || _args.size() > 2) return (_message_to_user(":Not enough parameters", "461"));
-    if (Utils::check_invalid_char(_args[0].c_str() + 1)) return (_message_to_user(":No such channel", "403"));
+    if (_args.size() < 1 || _args.size() > 2) return (_message_to_user(":Not enough parameters", "461", 0, _command));
+    if (Utils::check_invalid_char(_args[0].c_str() + 1))
+        return (_message_to_user(":No such channel", "403", 0, _args[0]));
 
     password = _args.size() == 1 ? "" : _args[1];
     channel = _server.get_channel_by_name(_args[0]);
@@ -262,28 +249,27 @@ void Command::_command_join(void) {
         _server.add_channel(channel);  // add the channel in the vector of channels
     }
 
-    std::cout << channel->user_limit << std::endl;
+    std::string channel_name = channel->get_channel_name();
     if (channel->is_user_limit() && channel->get_channel_size() >= channel->user_limit) {
-        return _message_to_user(":Cannot join channel (+l)", "471", 0, channel->get_channel_name());
+        return _message_to_user(":Cannot join channel (+l)", "471", 0, channel_name);
     }
     if (channel->is_invite_only())
-        if (!_user.is_invited_to_channel(channel->get_channel_name()))
-            return _message_to_user(":Cannot join channel (+i)", "473", 0, channel->get_channel_name());
+        if (!_user.is_invited_to_channel(channel_name))
+            return _message_to_user(":Cannot join channel (+i)", "473", 0, channel_name);
 
     if (channel->get_user_in_channel(this->_user.get_nick()) != NULL)
-        return (_message_to_user(":is already on channel", "443"));
+        return (_message_to_user(":is already on channel", "443", 0, _args[0] + " " + channel_name));
     if (password == channel->get_password())
         this->_user.add_channel(channel);
     else
         return _message_to_user(":Password incorrect", "464");
-    channel->message_to_channel(":" + this->_user.get_nick() + " JOIN " + channel->get_channel_name());
-    if (channel->get_topic().empty())
-        return _message_to_user(":No topic is set", "331", 0, channel->get_channel_name());
-    _message_to_user(":" + channel->get_topic(), "332", 0, channel->get_channel_name());
+    channel->message_to_channel(":" + this->_user.get_nick() + " JOIN " + channel_name);
+    if (channel->get_topic().empty()) return _message_to_user(":No topic is set", "331", 0, channel_name);
+    _message_to_user(":" + channel->get_topic(), "332", 0, channel_name);
 }
 
 void Command::_command_privmsg(void) {
-    if (_args.size() == 0) return _message_to_user(":No recipient given", "411");
+    if (_args.size() == 0) return _message_to_user(":No recipient given " + _command, "411");
     if (_args.size() == 1) return _message_to_user(":No text to send", "412");
 
     std::string target = _args[0];
@@ -292,15 +278,15 @@ void Command::_command_privmsg(void) {
 
     if (target[0] != '#') {
         User* receive = _server.get_user_by_nick(target);
-        if (receive == NULL) return _message_to_user(":No such nick/channel", "401");
+        if (receive == NULL) return _message_to_user(":No such nick", "401", 0, target);
         if (message[0] == ':') message.erase(0, 1);
         response = ":" + _user.get_nick() + " PRIVMSG " + receive->get_nick() + " :" + message;
         receive->send_message_to_user(response);
     } else {
         Channel* channel = _server.get_channel_by_name(target);
-        if (channel == NULL) return _message_to_user(":No such channel", "403");
+        if (channel == NULL) return _message_to_user(":No such channel", "403", 0, target);
         if (channel->get_user_in_channel(_user.get_nick()) == NULL)
-            return _message_to_user(":You're not on that channel", "442");
+            return _message_to_user(":You're not on that channel", "442", 0, target);
         if (message[0] == ':') message.erase(0, 1);
         response = ":" + _user.get_nick() + " PRIVMSG " + channel->get_channel_name() + " :" + message;
         channel->message_to_channel(response, _user.get_user_fd());
@@ -310,29 +296,31 @@ void Command::_command_privmsg(void) {
 void Command::_command_part(void) {
     Channel* channel;
     std::string response;
+    std::string channel_name;
     std::vector<std::string>::iterator it;
 
-    if (_args.size() < 1) return _message_to_user(":Not enough parameters", "461");
+    if (_args.size() < 1) return _message_to_user(":Not enough parameters", "461", 0, _command);
 
     it = _args.begin();
     for (; it != _args.end(); it++) {
         if ((*it)[0] == ':') it->erase(0, 1);
         if ((*it)[0] != '#') *it = '#' + *it;
         channel = _server.get_channel_by_name(*it);
-        if (channel == NULL) return _message_to_user(":No such channel", "403");
+        if (channel == NULL) return _message_to_user(":No such channel", "403", 0, *it);
         if (channel->get_user_in_channel(_user.get_nick()) == NULL)
             return _message_to_user(":You're not on that channel", "442");
+        channel_name = channel->get_channel_name();
         response = ":" + _user.get_nick() + " PART " + *it;
         channel->message_to_channel(response);
-        _set_next_channel_oper(false, channel->get_channel_name());
-        _user.remove_channel(channel->get_channel_name());
+        _set_next_channel_oper(false, channel_name);
+        _user.remove_channel(channel_name);
         channel->remove_user(&_user);
-        _flush_hex(channel->get_channel_name());
+        _flush_hex(channel_name);
     }
 }
 
 void Command::_command_topic(void) {
-    if (_args.empty()) return _message_to_user("TOPIC :Not enough parameters", "461");
+    if (_args.empty()) return _message_to_user(":Not enough parameters", "461", 0, _command);
 
     std::string channel_name = _args[0];
     Channel* channel = _server.get_channel_by_name(channel_name);
@@ -341,26 +329,9 @@ void Command::_command_topic(void) {
         return _message_to_user(":You're not on that channel", "442", 0, channel_name);
 
     if (_args.size() == 1) {
-        // Send the current topic to the user
         if (channel->get_topic().empty()) return _message_to_user(":No topic is set", "331", 0, channel_name);
         return _message_to_user(":" + channel->get_topic(), "332", 0, channel_name);
     } else {
-        // User is trying to set a new topic
-        /* if (_user.is_oper_in_channel(channel_name)) { */
-        /* std::string new_topic = Utils::joinToString(_args.begin() + 1, _args.end()); */
-        /* std::string response = ":" + _user.get_nick() + "!" + _user.get_username() + "@" + _user.get_hostname() + */
-        /*                        " TOPIC " + channel_name + " :" + new_topic + "\r\n"; */
-        /*     if (new_topic.empty()) { */
-        /*         channel->clear_topic(); */
-        /*         channel->message_to_channel(response); */
-        /*     } else { */
-        /*         channel->set_topic(new_topic); */
-        /*         channel->message_to_channel(response); */
-        /*     } */
-        /* } else { */
-        /*     _message_to_user(":You're not channel operator", "482", 0, channel_name); */
-        /* } */
-
         if (channel->is_topic_restricted() && !_user.is_oper_in_channel(channel_name)) {
             std::string new_topic = Utils::joinToString(_args.begin() + 1, _args.end());
             return _message_to_user(":You're not channel operator", "482", 0, channel_name);
@@ -380,7 +351,7 @@ void Command::_command_topic(void) {
 }
 
 void Command::_command_invite(void) {
-    if (_args.size() < 2) return _message_to_user(":Not enough parameters", "461", 0, "INVITE");
+    if (_args.size() < 2) return _message_to_user(":Not enough parameters", "461", 0, _command);
 
     std::string target_nick = _args[0];
     std::string channel_name = _args[1];
@@ -391,7 +362,7 @@ void Command::_command_invite(void) {
     if (target_user == NULL) return _message_to_user(":No such nick", "401", 0, target_nick);
     if (target_channel == NULL) return _message_to_user(":No such channel", "403", 0, channel_name);
 
-    if (!target_channel->find_user_in_channel(_user.get_user_fd())) /* if (!_user.is_member_of_channel(channel_name)) */
+    if (!target_channel->find_user_in_channel(_user.get_user_fd()))
         return _message_to_user(":You're not on that channel", "442", 0, channel_name);
     if (target_channel->is_invite_only() && !_user.is_oper_in_channel(channel_name))
         return _message_to_user(":You're not channel operator", "482", 0, channel_name);
@@ -404,7 +375,7 @@ void Command::_command_invite(void) {
 }
 
 void Command::_command_who(void) {
-    if (this->_args.size() > 2) return _message_to_user(":Not enough parameters", "461");
+    if (this->_args.size() > 2) return _message_to_user(":Not enough parameters", "461", 0, _command);
 
     std::string target = _args.size() > 0 ? _args[0] : "";
     if (target.empty()) _list_server_oper();
@@ -438,7 +409,7 @@ void Command::_list_channel_oper(std::string channel_name) {
     std::string response;
     Channel* channel = _server.get_channel_by_name(channel_name);
 
-    if (channel == NULL) return _message_to_user(":No such channel", "403");
+    if (channel == NULL) return _message_to_user(":No such channel", "403", 0, channel_name);
     _flush_hex(this->_args[0]);
 
     std::vector<User*> tmp = channel->get_user_list();
@@ -447,11 +418,10 @@ void Command::_list_channel_oper(std::string channel_name) {
         std::ostringstream oss;
         oss << i;
         std::string indexString = oss.str();
-        response = ":" + this->_user.get_servername() + " 352 " + this->_user.get_nick() + " :" +
-                   channel->get_channel_name() + " " + (*it)->get_username() + " " + (*it)->get_hostname() + " " +
-                   (*it)->get_servername();
-        if ((*it)->user_channel_info.find(channel->get_channel_name()) != (*it)->user_channel_info.end() &&
-            (*it)->user_channel_info[channel->get_channel_name()] == true) {
+        response = ":" + this->_user.get_servername() + " 352 " + this->_user.get_nick() + " :" + channel_name + " " +
+                   (*it)->get_username() + " " + (*it)->get_hostname() + " " + (*it)->get_servername();
+        if ((*it)->user_channel_info.find(channel_name) != (*it)->user_channel_info.end() &&
+            (*it)->user_channel_info[channel_name] == true) {
             response += " H :" + indexString + " @";
         } else {
             response += " :" + indexString + " ";
@@ -487,7 +457,7 @@ void Command::_command_mode(void) {
     Channel* channel = _server.get_channel_by_name(channel_name);
 
     if (channel == NULL) return _message_to_user(":No such channel", "403", 0, channel_name);
-    if (!channel->find_user_in_channel(_user.get_user_fd())) /* if (!_user.is_member_of_channel(channel_name)) */
+    if (!channel->find_user_in_channel(_user.get_user_fd()))
         return _message_to_user(":You're not on that channel", "442", 0, channel_name);
     if (!_user.is_oper_in_channel(channel_name))
         return _message_to_user(":You're not channel operator", "482", 0, channel_name);
