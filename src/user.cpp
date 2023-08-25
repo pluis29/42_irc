@@ -79,10 +79,10 @@ void User::add_channel(Channel* channel) {
     if (vIt != channel_invites.end())
         channel_invites.erase(vIt);
 
+    user_channel_info.insert(std::make_pair(channel->get_channel_name(), false));
     if (!channel->find_channel_oper()) {
         user_channel_info[channel->get_channel_name()] = true;
     }
 
     channel->add_user(this);
 }
-
