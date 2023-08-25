@@ -69,8 +69,9 @@ void Server::run(void) {
 
     this->_pollfd_vector.push_back(pfds);
     while (true) {
-        if (poll(&this->_pollfd_vector[0], this->_pollfd_vector.size(), 1) == -1)
+        if (poll(&this->_pollfd_vector[0], this->_pollfd_vector.size(), 1) == -1) {
             Utils::error_message("poll", strerror(errno));
+        }
         _handle_polling();
     }
 }
@@ -78,10 +79,12 @@ void Server::run(void) {
 void Server::_handle_polling(void) {
     for (std::vector<pollfd>::iterator it = _pollfd_vector.begin(); it != _pollfd_vector.end(); it++) {
         if (it->revents && POLLIN) {
-            if (it->fd == _server_socket)
+            if (it->fd == _server_socket) {
                 _create_user();
-            else
+
+            } else {
                 _message_recived(it->fd);
+            }
             break;
         }
     }
@@ -94,8 +97,12 @@ void Server::_create_user(void) {
     socklen_t user_len = sizeof(user_addr);
 
     user_fd = accept(_server_socket, (struct sockaddr *)&user_addr, &user_len);
-    if (user_fd < 0) Utils::error_message("accept", strerror(errno));
-    if (fcntl(user_fd, F_SETFL, O_NONBLOCK) == -1) Utils::error_message("fcntl", strerror(errno));
+    if (user_fd < 0) {
+        Utils::error_message("accept", strerror(errno));
+    }
+    if (fcntl(user_fd, F_SETFL, O_NONBLOCK) == -1) {
+        Utils::error_message("fcntl", strerror(errno));
+    }
     pollfd user_pfds = {user_fd, POLLIN, 0};
 
     new_user = new User(user_fd);
@@ -118,27 +125,36 @@ void Server::_message_recived(int fd) {
 
     buffer[bytesRead] = '\0';
     std::string str = buffer;
-    std::cout << "User:" << fd << " ---> " << str << std::endl;
-    if (str.find("\n") != std::string::npos) Command command(str, *get_user_by_fd(fd), *this);
+    std::cout << "User:" << fd << " --> " << str << std::endl;
+    if (str.find("\n") != std::string::npos) {
+        Command command(str, *get_user_by_fd(fd), *this);
+    }
     str.clear();
 }
 
 void Server::message_all_users(std::string msg, int user_fd) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
 
-    if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
+    if (msg.find("\r\n") == std::string::npos) {
+        msg += "\r\n";
+    }
 
-    for (; it != this->_users_vector.end(); it++)
-        if ((*it)->get_user_fd() != user_fd)
-            if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0)
+    for (; it != this->_users_vector.end(); it++) {
+        if ((*it)->get_user_fd() != user_fd) {
+            if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0) {
                 Utils::error_message("messageToServer: send:", strerror(errno));
-
+            }
+        }
+    }
 }
 
 bool Server::find_server_oper(void) {
     std::vector<User *>::iterator it = _users_vector.begin();
-    for (; it != _users_vector.end(); it++)
-        if ((*it)->is_server_oper()) return true;
+    for (; it != _users_vector.end(); it++) {
+        if ((*it)->is_server_oper()) {
+            return true;
+        }
+    }
 
     return false;
 }
@@ -146,7 +162,9 @@ bool Server::find_server_oper(void) {
 User *Server::find_next_server_oper(int user_fd) {
     std::vector<User *>::iterator userIt = this->_users_vector.begin();
     for (; userIt != this->_users_vector.end(); userIt++) {
-        if (!((*userIt)->get_username().empty()) && (*userIt)->get_user_fd() != user_fd) return *userIt;
+        if (!((*userIt)->get_username().empty()) && (*userIt)->get_user_fd() != user_fd) {
+            return *userIt;
+        }
     }
     return NULL;
 }
@@ -156,7 +174,9 @@ void Server::delete_user(int fd) {
     std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
     std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin();
 
-    for (; channelIt != this->_channel_vector.end(); channelIt++) (*channelIt)->remove_user(get_user_by_fd(fd));
+    for (; channelIt != this->_channel_vector.end(); channelIt++) {
+        (*channelIt)->remove_user(get_user_by_fd(fd));
+    }
 
     for (; pollIt != this->_pollfd_vector.end(); pollIt++) {
         if ((*pollIt).fd == fd) {
@@ -184,17 +204,24 @@ std::vector<User *> Server::get_users_in_server(void) const { return _users_vect
 User *Server::get_user_by_nick(std::string nick) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
 
-    for (; it != this->_users_vector.end(); it++)
-        if ((*it)->get_nick() == nick) return *it;
+    for (; it != this->_users_vector.end(); it++) {
+        if ((*it)->get_nick() == nick) {
+            return *it;
+        }
+    }
     return NULL;
 }
 
 Channel *Server::get_channel_by_name(std::string name) {
     std::vector<Channel *>::iterator it = _channel_vector.begin();
 
-    if (name[0] != '#') name = '#' + name;
+    if (name[0] != '#') {
+        name = '#' + name;
+    }
     for (; it != _channel_vector.end(); it++) {
-        if ((*it)->get_channel_name() == name) return (*it);
+        if ((*it)->get_channel_name() == name) {
+            return (*it);
+        }
     }
     return NULL;
 }
@@ -202,7 +229,10 @@ Channel *Server::get_channel_by_name(std::string name) {
 User *Server::get_user_by_fd(int user_fd) {
     std::vector<User *>::iterator it = this->_users_vector.begin();
 
-    for (; it != this->_users_vector.end(); it++)
-        if ((*it)->get_user_fd() == user_fd) return *it;
+    for (; it != this->_users_vector.end(); it++) {
+        if ((*it)->get_user_fd() == user_fd) {
+            return *it;
+        }
+    }
     return NULL;
 }

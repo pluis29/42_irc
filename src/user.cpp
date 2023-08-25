@@ -58,9 +58,12 @@ void User::set_realname(std::string realname) { this->_realname = realname; }
 void User::set_servername(std::string servername) { this->_servername = servername; }
 
 void User::send_message_to_user(std::string message) {
-    if (message.find("\r\n") == std::string::npos) message += "\r\n";
-    if (send(get_user_fd(), message.c_str(), message.size(), 0) < 0)
+    if (message.find("\r\n") == std::string::npos) {
+        message += "\r\n";
+    }
+    if (send(get_user_fd(), message.c_str(), message.size(), 0) < 0) {
         Utils::error_message("receiveMessage: send:", strerror(errno));
+    }
 }
 
 void User::remove_channel(std::string channel_name) {
@@ -72,12 +75,16 @@ void User::remove_channel(std::string channel_name) {
 
 void User::add_channel(Channel* channel) {
     std::map<std::string, bool>::iterator it = user_channel_info.find(channel->get_channel_name());
-    if (it != user_channel_info.end())
+    if (it != user_channel_info.end()) {
         return;
+    }
 
-    std::vector<std::string>::iterator vIt = std::find(channel_invites.begin(), channel_invites.end(), channel->get_channel_name());
-    if (vIt != channel_invites.end())
+    std::vector<std::string>::iterator vIt =
+        std::find(channel_invites.begin(), channel_invites.end(), channel->get_channel_name());
+
+    if (vIt != channel_invites.end()) {
         channel_invites.erase(vIt);
+    }
 
     user_channel_info.insert(std::make_pair(channel->get_channel_name(), false));
     if (!channel->find_channel_oper()) {

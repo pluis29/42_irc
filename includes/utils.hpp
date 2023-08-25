@@ -11,4 +11,4 @@ bool check_invalid_char(std::string str);
 std::string joinToString(std::vector<std::string>::iterator first, std::vector<std::string>::iterator last);
 }  // namespace Utils
 
-#endif // UTILS_HPP_
+#endif  // UTILS_HPP_

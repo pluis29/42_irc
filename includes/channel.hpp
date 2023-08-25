@@ -9,7 +9,7 @@ class Channel {
    public:
     Channel(std::string name, std::string password);
     ~Channel(void);
-    
+
     void add_user(User* user);
     void message_to_channel(std::string msg);
     void message_to_channel(std::string msg, int exclude_fd);
@@ -44,4 +44,4 @@ class Channel {
     std::vector<User*> _users;
 };
 
-#endif
+#endif  // CHANNEL_HPP_

@@ -58,4 +58,4 @@ class Command {
     void _unset_channel_operator(Channel* channel, std::string argument);
 };
 
-#endif
+#endif  // COMMAND_HPP_

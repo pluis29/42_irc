@@ -1,7 +1,6 @@
 #ifndef USER_HPP_
 #define USER_HPP_
 
-#include <vector>
 #include "commonInclude.hpp"
 
 class Channel;
@@ -31,7 +30,6 @@ class User {
     std::string get_nick(void) const;
     std::string get_username(void) const;
     std::string get_servername(void) const;
-
 
     void send_message_to_user(std::string message);
     void add_channel(Channel* channel);

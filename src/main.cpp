@@ -1,9 +1,6 @@
 #include "server.hpp"
 
-void handle_sigint(int sig) {
-    (void)sig;
-    throw std::runtime_error("");
-}
+void handle_sigint(int sig);
 
 int main(int argc, char **argv) {
     if (argc != 3) {
@@ -20,4 +17,9 @@ int main(int argc, char **argv) {
         std::cerr << e.what() << std::endl;
     }
     return EXIT_SUCCESS;
+}
+
+void handle_sigint(int sig) {
+    (void)sig;
+    throw std::runtime_error("");
 }

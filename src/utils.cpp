@@ -9,14 +9,16 @@ std::vector<std::string> Utils::split(std::string str, char c) {
     std::vector<std::string> split;
 
     for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] != c)
+        if (str[i] != c) {
             buff += str[i];
-        else if (str[i] == c && buff != "") {
+        } else if (str[i] == c && buff != "") {
             split.push_back(buff);
             buff = "";
         }
     }
-    if (buff != "") split.push_back(buff);
+    if (buff != "") {
+        split.push_back(buff);
+    }
     return split;
 }
 
@@ -26,14 +28,19 @@ std::string Utils::toUpperCase(std::string str) {
 }
 
 bool Utils::check_invalid_char(std::string str) {
-    for (int i = 0; str[i] != '\0'; i++)
-        if (!isalnum(str[i]) && !isalpha(str[i])) return true;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (!isalnum(str[i]) && !isalpha(str[i])) {
+            return true;
+        }
+    }
     return false;
 }
 
 std::string Utils::joinToString(std::vector<std::string>::iterator first, std::vector<std::string>::iterator last) {
     std::string message;
 
-    for (; first != last; first++) message += *first + " ";
+    for (; first != last; first++) {
+        message += *first + " ";
+    }
     return (message);
 }
