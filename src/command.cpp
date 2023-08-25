@@ -70,7 +70,7 @@ void Command::_invalid_command(void) {
                                 "<servername> <realname>",
                                 "431");
     }
-    _message_to_user(_command + " :Unknown command", "421");
+    _message_to_user(_command + " :Unknown command", "421", 0, _command);
 }
 
 void Command::_message_to_user(std::string msg, std::string code, int fd, std::string opt) {
@@ -388,7 +388,7 @@ void Command::_command_part(void) {
             return _message_to_user(":No such channel", "403", 0, *it);
         }
         if (channel->get_user_in_channel(_user.get_nick()) == NULL) {
-            return _message_to_user(":You're not on that channel", "442");
+            return _message_to_user(":You're not on that channel", "442", 0, *it);
         }
         channel_name = channel->get_channel_name();
         response = ":" + _user.get_nick() + " PART " + *it;
