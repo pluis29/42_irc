@@ -3,8 +3,6 @@
 
 #include "commonInclude.hpp"
 
-// #define COMMAND_USER 1
-// #define ANY_COMMAND 0
 #define OPERATOR_PASS "ok"
 
 class Server;
@@ -28,10 +26,11 @@ class Command {
     std::string _command;
 
     void _flush_hex(std::string channel_target);
-    std::vector<std::string> set_next_channel_oper(bool shouldUseLoop, std::string channel_name = "");
     void _list_server_oper(void);
     void _list_channel_oper(std::string channel_name);
+    std::vector<std::string> _set_next_channel_oper(bool shouldUseLoop, std::string channel_name = "");
 
+    typedef void (Command::*ModeAction)(Channel*, std::string);
     typedef void (Command::*command_handler)(void);
     void _command_pass(void);
     void _command_nick(void);
@@ -48,13 +47,15 @@ class Command {
 
     bool mode_need_args(std::string mode);
     void _set_invite_only(Channel* channel, std::string argument);
-    void _unset_invite_only(Channel* channel, std::string argument);
     void _set_channel_key(Channel* channel, std::string argument);
-    void _unset_channel_key(Channel* channel, std::string argument);
     void _set_topic_restriction(Channel* channel, std::string argument);
-    void _unset_topic_restriction(Channel* channel, std::string argument);
     void _set_user_limit(Channel* channel, std::string argument);
+    void _set_channel_operator(Channel* channel, std::string argument);
+    void _unset_invite_only(Channel* channel, std::string argument);
+    void _unset_channel_key(Channel* channel, std::string argument);
+    void _unset_topic_restriction(Channel* channel, std::string argument);
     void _unset_user_limit(Channel* channel, std::string argument);
+    void _unset_channel_operator(Channel* channel, std::string argument);
 };
 
 #endif

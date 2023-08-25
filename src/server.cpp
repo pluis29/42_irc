@@ -7,7 +7,6 @@
 
 Server::Server(const int port, const std::string password) : _host_ip(HOST_IP), _port(port), _password(password) {
     _set_server_socket();
-    return;
 }
 
 Server::~Server(void) {
@@ -105,8 +104,7 @@ void Server::_create_user(void) {
     new_user->set_hostname(inet_ntoa(user_addr.sin_addr));
     new_user->set_servername(SERVERNAME);
 
-    std::cout << "New user connection socket_fd: " << user_fd << ", ip is: " << inet_ntoa(user_addr.sin_addr)
-              << ", port: " << ntohs(user_addr.sin_port) << std::endl;
+    std::cout << "New user connection socket_fd: " << user_fd << std::endl;
 }
 
 void Server::_message_recived(int fd) {
@@ -114,13 +112,13 @@ void Server::_message_recived(int fd) {
     ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
     if (bytesRead <= 0) {
         std::cout << "Client disconnected fd: " << fd << std::endl;
-        /* Command command("/Quit", get_user_by_fd(fd), *this); */
+        Command command("/Quit", *get_user_by_fd(fd), *this);
         return;
     }
 
     buffer[bytesRead] = '\0';
     std::string str = buffer;
-    std::cout << fd << " ---- " << str << std::endl;
+    std::cout << "User:" << fd << " ---> " << str << std::endl;
     if (str.find("\n") != std::string::npos) Command command(str, *get_user_by_fd(fd), *this);
     str.clear();
 }
@@ -132,15 +130,14 @@ void Server::message_all_users(std::string msg, int user_fd) {
 
     for (; it != this->_users_vector.end(); it++)
         if ((*it)->get_user_fd() != user_fd)
-            if (send((*it)->get_user_fd(), msg.c_str(), strlen(msg.c_str()), 0) < 0)
+            if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0)
                 Utils::error_message("messageToServer: send:", strerror(errno));
 
-    return;
 }
 
 bool Server::find_server_oper(void) {
-    std::vector<User *>::iterator it = this->_users_vector.begin();
-    for (; it != this->_users_vector.end(); it++)
+    std::vector<User *>::iterator it = _users_vector.begin();
+    for (; it != _users_vector.end(); it++)
         if ((*it)->is_server_oper()) return true;
 
     return false;
@@ -184,7 +181,7 @@ void Server::add_channel(Channel *channel) { this->_channel_vector.push_back(cha
 
 std::string Server::get_password(void) const { return _password; }
 
-std::vector<User *> Server::get_users_in_server(void) const { return (this->_users_vector); }
+std::vector<User *> Server::get_users_in_server(void) const { return _users_vector; }
 
 User *Server::get_user_by_nick(std::string nick) {
     std::vector<User *>::iterator it = this->_users_vector.begin();

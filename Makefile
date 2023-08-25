@@ -9,8 +9,8 @@ OBJ = $(addprefix $(P_OBJ), $(F_SRC:%.cpp=%.o))
 NAME = ircserv
 
 INC = -I $(P_INCLUDE)
-CFLAGS =  -std=c++98 -g
-# CFLAGS = -Wall -Wextra -Werror -std=c++98 -g
+# CFLAGS =  -std=c++98 -g
+CFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 RM = rm -rf
 CC = c++
 

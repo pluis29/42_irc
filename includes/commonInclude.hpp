@@ -1,5 +1,5 @@
-#ifndef COMMON_HPP_
-#define COMMON_HPP_
+#ifndef COMMON_INCLUDE_HPP_
+#define COMMON_INCLUDE_HPP_
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -24,4 +24,4 @@
 #include <stdexcept>
 #include <vector>
 
-#endif  // COMMON_HPP_
+#endif  // COMMON_INCLUDE_HPP_

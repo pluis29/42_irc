@@ -1,60 +1,48 @@
 #include "channel.hpp"
 
-#include <unistd.h>
-
-#include <map>
-#include <vector>
-
 #include "user.hpp"
 #include "utils.hpp"
 
-Channel::Channel(std::string name, std::string password)
-    : have_user_limit(false), invite_only(false), topic_restrict(false), _name(name), password(password) {
-    return;
-}
+Channel::Channel(std::string name, std::string password) : name(name), password(password), topic_restrict(false),
+      invite_only(false), have_user_limit(false), user_limit(0) { }
 
-Channel::~Channel(void) { return; }
+Channel::~Channel(void) { }
 
-std::string Channel::get_channel_name(void) const { return _name; }
+std::string Channel::get_channel_name(void) const { return name; }
 
 std::vector<User*> Channel::get_user_list(void) const { return _users; }
 
 User* Channel::get_user_in_channel(std::string nick) {
-    std::vector<User*>::iterator it = this->_users.begin();
+    std::vector<User*>::iterator it = _users.begin();
 
     if (nick[0] == ':') nick.erase(0, 1);
-    for (; it != this->_users.end(); it++) {
+    for (; it != _users.end(); it++) {
         if ((*it)->get_nick() == nick) return (*it);
     }
     return (NULL);
 }
 
-std::string Channel::get_password(void) { return this->password; }
+std::string Channel::get_password(void) { return password; }
 
-void Channel::message_to_channel(std::string msg, int exclude_fd) {
-    std::vector<User*>::iterator it = this->_users.begin();
+int Channel::get_channel_size() const { return _users.size(); }
 
-    if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
-    for (; it != this->_users.end(); it++)
-        if ((*it)->get_user_fd() != exclude_fd)
-            if (send((*it)->get_user_fd(), msg.c_str(), strlen(msg.c_str()), 0) < 0)
-                Utils::error_message("message_to_channel: send:", strerror(errno));
-    return;
-}
+std::string Channel::get_topic(void) const { return _topic; }
 
-void Channel::message_to_channel(std::string msg) {
-    std::vector<User*>::iterator it = this->_users.begin();
+void Channel::set_topic(std::string topic) { _topic = topic; }
 
-    if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
-    for (; it != this->_users.end(); it++)
-        if (send((*it)->get_user_fd(), msg.c_str(), strlen(msg.c_str()), 0) < 0)
-            Utils::error_message("message_to_channel: send:", strerror(errno));
-    return;
-}
+bool Channel::is_invite_only(void) { return invite_only; }
 
-void Channel::add_user(User* user) {
-    if (get_user_in_channel(user->get_nick()) == NULL) this->_users.push_back(user);
-    return;
+bool Channel::is_topic_restricted(void) { return topic_restrict; }
+
+bool Channel::is_user_limit(void) { return have_user_limit; }
+
+bool Channel::find_user_in_channel(int user_fd) {
+    for (std::vector<User*>::iterator it = _users.begin(); it != _users.end(); it++) {
+        if ((*it)->get_user_fd() == user_fd) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Channel::find_channel_oper(void) {
@@ -63,10 +51,44 @@ bool Channel::find_channel_oper(void) {
     for (; it != _users.end(); ++it) {
         if ((*it)->user_channel_info.find(get_channel_name()) != (*it)->user_channel_info.end() &&
             (*it)->user_channel_info[get_channel_name()] == true) {
-            return true;  // O usuário é operador no canal "nome_do_canal"
+            return true;  
         }
     }
-    return false;  // Nenhum usuário é operador no canal "nome_do_canal"
+    return false; 
+}
+
+User* Channel::find_next_channel_oper(int user_fd) {
+    for (std::vector<User*>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
+        if ((*it)->get_user_fd() != user_fd) {
+            if (!(*it)->user_channel_info[name]) {
+                return (*it);
+            }
+        }
+    }
+    return NULL;
+}
+
+void Channel::message_to_channel(std::string msg, int exclude_fd) {
+    std::vector<User*>::iterator it = _users.begin();
+
+    if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
+    for (; it != _users.end(); it++)
+        if ((*it)->get_user_fd() != exclude_fd)
+            if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0)
+                Utils::error_message("message_to_channel: send:", strerror(errno));
+}
+
+void Channel::message_to_channel(std::string msg) {
+    std::vector<User*>::iterator it = _users.begin();
+
+    if (msg.find("\r\n") == std::string::npos) msg += "\r\n";
+    for (; it != _users.end(); it++)
+        if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0)
+            Utils::error_message("message_to_channel: send:", strerror(errno));
+}
+
+void Channel::add_user(User* user) {
+    if (get_user_in_channel(user->get_nick()) == NULL) _users.push_back(user);
 }
 
 void Channel::remove_user(User* user) {
@@ -77,62 +99,6 @@ void Channel::remove_user(User* user) {
             return;
         }
     }
-    return;
 }
-
-/* User* Channel::find_next_channel_oper(int user_fd) { */
-/*     for (std::vector<User*>::iterator it = this->_users.begin(); it != this->_users.end(); it++) { */
-/*         std::cout << "k1\n"; */
-/*         if ((*it)->get_user_fd() != user_fd) { */
-/*             std::cout << "k2\n"; */
-/*             std::map<std::string, bool>::iterator map_it = (*it)->user_channel_info.find(_name); */
-/*             if (map_it != (*it)->user_channel_info.end()) { */
-/*                 std::cout << "k3: Found map entry\n"; */
-/*                 if (map_it->second) { */
-/*                     std::cout << "k4: Entry is true\n"; */
-/*                 } else { */
-/*                     std::cout << "k5: Entry is false\n"; */
-/*                     return (*it); */
-/*                 } */
-/*             } else { */
-/*                 std::cout << "k6: Entry not found\n"; */
-/*             } */
-/*         } */
-/*     } */
-/*     return NULL; */
-/* } */
-
-User* Channel::find_next_channel_oper(int user_fd) {
-    for (std::vector<User*>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
-        if ((*it)->get_user_fd() != user_fd) {
-            if (!(*it)->user_channel_info[_name]) {
-                return (*it);
-            }
-        }
-    }
-    return NULL;
-}
-int Channel::get_channel_size() const { return _users.size(); }
 
 void Channel::clear_topic(void) { _topic.clear(); }
-
-void Channel::set_topic(std::string topic) { _topic = topic; }
-
-std::string Channel::get_topic(void) const { return _topic; }
-
-bool Channel::is_invite_only(void) { return invite_only; }
-
-bool Channel::is_topic_restricted(void) { return topic_restrict; }
-
-bool Channel::is_user_limit(void) { return have_user_limit; }
-
-bool Channel::find_user_in_channel(int user_fd) {
-    for (std::vector<User*>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
-        if ((*it)->get_user_fd() == user_fd) {
-            std::cout << "achou\n";
-            return true;
-        }
-    }
-    std::cout << "nao achou\n";
-    return false;
-}
