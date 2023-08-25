@@ -3,18 +3,15 @@ P_INCLUDE = includes/
 P_OBJ = obj/
 
 F_SRC = main.cpp server.cpp utils.cpp user.cpp command.cpp channel.cpp
-
 OBJ = $(addprefix $(P_OBJ), $(F_SRC:%.cpp=%.o))
 
 NAME = ircserv
-
 INC = -I $(P_INCLUDE)
-# CFLAGS =  -std=c++98 -g
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 RM = rm -rf
 CC = c++
 
-.PHONY: all clean fclean  re run
+.PHONY: all clean fclean  re run val
 
 all: $(NAME)
 
