@@ -62,6 +62,8 @@ void Server::_set_server_socket(void) {
         close(_server_socket);
         Utils::error_message("listen:", strerror(errno));
     }
+    std::cout << "Server created in ip: " << inet_ntoa(serverAddr.sin_addr) << ", port: " << ntohs(serverAddr.sin_port)
+              << std::endl;
 }
 
 void Server::run(void) {
