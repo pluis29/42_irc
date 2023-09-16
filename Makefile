@@ -23,10 +23,10 @@ $(P_OBJ)%.o: $(P_SRC)%.cpp
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 run: all
-	./$(NAME) 6667 123
+	./$(NAME) 8000 123
 
 val: all
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --undef-value-errors=yes --errors-for-leak-kinds=all --show-reachable=yes ./$(NAME) 6667 123
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --undef-value-errors=yes --errors-for-leak-kinds=all --show-reachable=yes ./$(NAME) 8000 123
 
 clean:
 	$(RM) $(P_OBJ)

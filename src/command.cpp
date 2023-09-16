@@ -47,6 +47,7 @@ void Command::_handle_command(void) {
         command_map["TOPIC"] = &Command::_command_topic;
         command_map["INVITE"] = &Command::_command_invite;
         command_map["MODE"] = &Command::_command_mode;
+        command_map["KICK"] = &Command::_command_kick;
     }
 
     std::map<std::string, command_handler>::iterator it = command_map.find(this->_command);
@@ -398,6 +399,42 @@ void Command::_command_part(void) {
         channel->remove_user(&_user);
         _flush_hex(channel_name);
     }
+}
+
+void Command::_command_kick(void) {
+    if (_args.empty() || _args.size() < 1) {
+        return _message_to_user(":Not enough parameters", "461", 0, _command);
+    }
+    std::string channel_name = _args[0];
+    if (channel_name[0] != '#') {
+        channel_name = '#' + channel_name;
+    }
+    Channel* channel = _server.get_channel_by_name(channel_name);
+    if (channel == NULL) {
+        return _message_to_user(":No such channel teste", "403", 0, channel_name);
+    }
+    if (!_user.is_oper_in_channel(channel_name)) {
+        return _message_to_user(":You're not channel operator", "482", 0, channel_name);
+    }
+    User* target = channel->get_user_in_channel(_args[1]);
+    if (channel->get_user_in_channel(_user.get_nick()) == NULL || target == NULL) {
+        return _message_to_user(":They aren't on that channel", "441", 0, channel_name);
+    }
+    if (_user.get_nick() == target->get_nick()) {
+        return _message_to_user(":Use command part to leave the channel", "069", 0, channel_name);
+    }
+
+    std::string message = Utils::joinToString(this->_args.begin() + 2, this->_args.end());
+    if (message[0] == ':') {
+        message.erase(0, 1);
+    }
+
+    std::string response = ":" + _user.get_nick() + "!" + _user.get_username() + "@" + _user.get_hostname() +
+        " KICK " + channel_name + " " + target->get_nick() + " " + message + "\r\n";
+    target->remove_channel(channel_name);
+    channel->remove_user(target);
+    channel->message_to_channel(response);
+    _flush_hex(channel_name);
 }
 
 void Command::_command_topic(void) {

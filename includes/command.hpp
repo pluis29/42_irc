@@ -44,6 +44,7 @@ class Command {
     void _command_topic(void);
     void _command_invite(void);
     void _command_mode(void);
+    void _command_kick(void);
 
     bool mode_need_args(std::string mode);
     void _set_invite_only(Channel* channel, std::string argument);
