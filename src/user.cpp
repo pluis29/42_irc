@@ -62,7 +62,7 @@ void User::send_message_to_user(std::string message) {
         message += "\r\n";
     }
     if (send(get_user_fd(), message.c_str(), message.size(), 0) < 0) {
-        Utils::error_message("receiveMessage: send:", strerror(errno));
+        Utils::error_message("receiveMessage: send:", "error");
     }
 }
 

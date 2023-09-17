@@ -86,7 +86,7 @@ void Channel::message_to_channel(std::string msg, int exclude_fd) {
     for (; it != _users.end(); it++) {
         if ((*it)->get_user_fd() != exclude_fd) {
             if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0) {
-                Utils::error_message("message_to_channel: send:", strerror(errno));
+                Utils::error_message("message_to_channel: send:", "error");
             }
         }
     }
@@ -100,7 +100,7 @@ void Channel::message_to_channel(std::string msg) {
     }
     for (; it != _users.end(); it++) {
         if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0) {
-            Utils::error_message("message_to_channel: send:", strerror(errno));
+            Utils::error_message("message_to_channel: send:", "error");
         }
     }
 }

@@ -85,7 +85,7 @@ void Command::_message_to_user(std::string msg, std::string code, int fd, std::s
         fd = _user.get_user_fd();
     }
     if (send(fd, response.c_str(), response.size(), 0) < 0) {
-        Utils::error_message("send:", strerror(errno));
+        Utils::error_message("send:", "error");
     }
 }
 
@@ -114,7 +114,7 @@ void Command::_flush_hex(std::string channel_target) {
         response += "\r\n:" + (*listIt)->get_servername() + " " + "366" + " " + (*listIt)->get_nick() + " " +
                     channel->get_channel_name() + " :End of /NAMES list.\r\n";
         if (send((*listIt)->get_user_fd(), response.c_str(), response.size(), 0) < 0) {
-            Utils::error_message("send:", strerror(errno));
+            Utils::error_message("send:", "error");
         }
     }
 }
@@ -208,7 +208,7 @@ void Command::_command_nick(void) {
                    " NICK :" + _user.get_nick() + "\r\n";
     }
     if (send(_user.get_user_fd(), response.c_str(), response.size(), 0) < 0) {
-        Utils::error_message("send:", strerror(errno));
+        Utils::error_message("send:", "error");
     }
     _server.message_all_users(response, _user.get_user_fd());
 }
@@ -532,13 +532,13 @@ void Command::_list_server_oper(void) {
         response += (*it)->is_server_oper() ? " H :" + indexString + " @" : " :" + indexString + " ";
         response += (*it)->get_nick() + "\r\n";
         if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0) {
-            Utils::error_message("send:", strerror(errno));
+            Utils::error_message("send:", "error");
         }
         i++;
     }
     response = ":" + _user.get_servername() + " " + "315" + " " + _user.get_nick() + " " + ":End of /WHO list.\r\n";
     if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0) {
-        Utils::error_message("send:", strerror(errno));
+        Utils::error_message("send:", "error");
     }
 }
 
@@ -568,13 +568,13 @@ void Command::_list_channel_oper(std::string channel_name) {
         response += (*it)->get_nick() + "\r\n";
 
         if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0) {
-            Utils::error_message("send:", strerror(errno));
+            Utils::error_message("send:", "error");
         }
         i++;
     }
     response = ":" + _user.get_servername() + " " + "315" + " " + _user.get_nick() + " " + ":End of /WHO list.\r\n";
     if (send(this->_user.get_user_fd(), response.c_str(), response.size(), 0) < 0) {
-        Utils::error_message("send:", strerror(errno));
+        Utils::error_message("send:", "error");
     }
 }
 

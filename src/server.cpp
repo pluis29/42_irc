@@ -72,7 +72,7 @@ void Server::run(void) {
     this->_pollfd_vector.push_back(pfds);
     while (true) {
         if (poll(&this->_pollfd_vector[0], this->_pollfd_vector.size(), 1) == -1) {
-            Utils::error_message("poll", strerror(errno));
+            Utils::error_message("poll", "error");
         }
         _handle_polling();
     }
@@ -100,10 +100,10 @@ void Server::_create_user(void) {
 
     user_fd = accept(_server_socket, (struct sockaddr *)&user_addr, &user_len);
     if (user_fd < 0) {
-        Utils::error_message("accept", strerror(errno));
+        Utils::error_message("accept", "error");
     }
     if (fcntl(user_fd, F_SETFL, O_NONBLOCK) == -1) {
-        Utils::error_message("fcntl", strerror(errno));
+        Utils::error_message("fcntl", "error");
     }
     pollfd user_pfds = {user_fd, POLLIN, 0};
 
@@ -144,7 +144,7 @@ void Server::message_all_users(std::string msg, int user_fd) {
     for (; it != this->_users_vector.end(); it++) {
         if ((*it)->get_user_fd() != user_fd) {
             if (send((*it)->get_user_fd(), msg.c_str(), msg.size(), 0) < 0) {
-                Utils::error_message("messageToServer: send:", strerror(errno));
+                Utils::error_message("messageToServer: send:", "error");
             }
         }
     }
