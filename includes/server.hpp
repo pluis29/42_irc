@@ -43,6 +43,8 @@ class Server {
     void _handle_polling(void);
     void _create_user(void);
     void _set_server_socket(void);
+
+    std::string _str_command;
 };
 
 #endif  // SERVER_HPP_

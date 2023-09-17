@@ -118,7 +118,7 @@ void Server::_create_user(void) {
 
 void Server::_message_recived(int fd) {
     char buffer[BUFFER_SIZE];
-    ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
+    ssize_t bytesRead = recv(fd, buffer, BUFFER_SIZE - 1, 0);
     if (bytesRead <= 0) {
         std::cout << "Client disconnected fd: " << fd << std::endl;
         Command command("/Quit", *get_user_by_fd(fd), *this);
@@ -126,12 +126,13 @@ void Server::_message_recived(int fd) {
     }
 
     buffer[bytesRead] = '\0';
-    std::string str = buffer;
-    std::cout << "User:" << fd << " --> " << str << std::endl;
-    if (str.find("\n") != std::string::npos) {
-        Command command(str, *get_user_by_fd(fd), *this);
+    _str_command.append(buffer);
+
+    std::cout << "User:" << fd << " --> " << _str_command << std::endl;
+    if (_str_command.find("\n") != std::string::npos) {
+        Command command(_str_command, *get_user_by_fd(fd), *this);
+        _str_command.clear();
     }
-    str.clear();
 }
 
 void Server::message_all_users(std::string msg, int user_fd) {
