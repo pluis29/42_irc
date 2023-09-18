@@ -461,6 +461,9 @@ void Command::_command_topic(void) {
         }
 
         std::string new_topic = Utils::joinToString(_args.begin() + 1, _args.end());
+        if (new_topic[0] == ':'){
+            new_topic.erase(0, 1);
+        }
         std::string response = ":" + _user.get_nick() + "!" + _user.get_username() + "@" + _user.get_hostname() +
                                " TOPIC " + channel_name + " :" + new_topic + "\r\n";
         if (new_topic.empty()) {

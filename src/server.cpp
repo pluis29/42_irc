@@ -126,12 +126,12 @@ void Server::_message_recived(int fd) {
     }
 
     buffer[bytesRead] = '\0';
-    _str_command.append(buffer);
+    _str_command[fd].append(buffer);
 
-    std::cout << "User:" << fd << " --> " << _str_command << std::endl;
-    if (_str_command.find("\n") != std::string::npos) {
-        Command command(_str_command, *get_user_by_fd(fd), *this);
-        _str_command.clear();
+    std::cout << "User:" << fd << " --> " << _str_command[fd] << std::endl;
+    if (_str_command[fd].find("\n") != std::string::npos) {
+        Command command(_str_command[fd], *get_user_by_fd(fd), *this);
+        _str_command[fd].clear();
     }
 }
 
@@ -177,6 +177,7 @@ void Server::delete_user(int fd) {
     std::vector<pollfd>::iterator pollIt = this->_pollfd_vector.begin();
     std::vector<Channel *>::iterator channelIt = this->_channel_vector.begin();
 
+    _str_command[fd].clear();
     for (; channelIt != this->_channel_vector.end(); channelIt++) {
         (*channelIt)->remove_user(get_user_by_fd(fd));
     }
