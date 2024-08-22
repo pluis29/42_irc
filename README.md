@@ -1,10 +1,9 @@
 # IRC SERVER
 
-- [IRC SERVER](#irc-server)
-  - [Introduction](#introduction)
-  - [Usage](#usage)
-  - [Commands](#commands)
-  - [Useful Links](#useful-links)
+- [Introduction](#introduction)
+- [Usage](#usage)
+- [Commands](#commands)
+- [Useful Links](#useful-links)
 
 
 ## Introduction
