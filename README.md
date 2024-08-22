@@ -15,6 +15,7 @@ IRC is a text-based communication protocol on the Internet that offers real-time
 <p align="center">
   <img src="./hexChat.png" width="60%" />
 </p>
+
 ## Usage
 
 For testing, we will use [HexChat](https://hexchat.github.io/index.html) as the client interface.
